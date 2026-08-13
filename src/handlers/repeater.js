@@ -13,11 +13,11 @@ export default function received(message) {
     }
     messageQueue.push(message);
     let f = false;
+    l2 = l1;
+    l1 = message;
     if(!blackname.has(message) && l1===l2 && l1===message){
         blackname.add(message);
         f = true;
     }
-    l2 = l1;
-    l1 = message;
     return f;
 }
