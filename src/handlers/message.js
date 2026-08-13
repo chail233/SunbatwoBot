@@ -1,12 +1,12 @@
 import {sendGroupMsg} from "../websocket/act.js";
 import config from "../config.js";
 
-export default async function(event){
+export default function(event, socket) {
     if(event.post_type!=="message"){return;}
-    if(event.message_type==="group" && event.group_id===config.targetGroupId){
+    if(event.message_type==="group" && event.group_id==config.targetGroupId){
         let text = extractText(event.message);
         console.log("received group message:", text);
-        await  sendGroupMsg(event.group_id, text);
+        sendGroupMsg(socket, event.group_id, text);
     }
 }
 function extractText(message){
