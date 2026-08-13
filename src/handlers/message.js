@@ -1,12 +1,14 @@
 import {sendGroupMsg} from "../websocket/act.js";
 import config from "../config.js";
-
+import needRepeat from "./repeater.js";
 export default function(event, socket) {
     if(event.post_type!=="message"){return;}
     if(event.message_type==="group" && event.group_id==config.targetGroupId){
         let text = extractText(event.message);
         console.log("received group message:", text);
-        sendGroupMsg(socket, event.group_id, text);
+        if(needRepeat(text)){
+            sendGroupMsg(socket, event.group_id, text);
+        }
     }
 }
 function extractText(message){

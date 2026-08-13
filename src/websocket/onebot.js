@@ -4,7 +4,7 @@ import messageHandler from "../handlers/message.js";
 let socket=null;
 //创建 OneBot WebSocket 服务
 export async function startOneBotWS(){
-    const wss = new WebSocketServer({port:config.wsPort, path:"/onebot/v11/ws"});
+    const wss = new WebSocketServer({port:Number(config.wsPort), path:"/onebot/v11/ws"});
     wss.on("connection", ws => {
         console.log("Connected!");
         socket = ws;
