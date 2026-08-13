@@ -14,7 +14,7 @@ export function startOneBotWS(){
             console.log("Received event:", event);
             await messageHandler(event);
         });
-        console.log("ws listening on port: " + config.port);
+        console.log("ws listening on port: " + config.wsPort);
     });
 }
 
