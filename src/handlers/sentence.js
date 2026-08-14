@@ -1,4 +1,6 @@
-const api = "https://v1.hitokoto.cn/?min_length=20?max_length=100";
+const api = [
+    "https://v1.hitokoto.cn/?min_length=20?max_length=100",
+];
 const LIMIT_COUNT = 3;
 const LIMIT_TIME = 10*1000;
 let count = 0;

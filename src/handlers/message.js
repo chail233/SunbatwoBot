@@ -2,22 +2,35 @@ import {sendGroupMsg} from "../websocket/act.js";
 import config from "../config.js";
 import needRepeat from "./repeater.js";
 import getSentence from "./sentence.js";
-const sentence_command = "来句台词";
-const sentence_fail = "急什么，慢点发";
+import getAcg from "./acg.js";
+import runCode from "./runcode.js";
+const cmd = new Map();
+
+cmd.set("来句台词", async (event, socket)=>{
+    const sentence = await getSentence();
+    if(sentence) sendGroupMsg(socket, event.group_id, sentence);
+    else sendGroupMsg(socket, event.group_id, "别急");
+});
+cmd.set("来张图", async (event, socket)=>{
+    const img = await getAcg();
+    sendGroupMsg(socket, event.group_id, img);
+});
 
 export default async function(event, socket) {
     if(event.post_type!=="message"){return;}
-    if(event.message_type==="group" && event.group_id==config.targetGroupId){
+    if(event.message_type==="group" && event.group_id.toString()===config.targetGroupId.toString()){
         let text = extractText(event.message);
         console.log("received group message:", text);
 
-        if(text.toString()===sentence_command){
-            const sentence = await getSentence();
-            if(sentence) sendGroupMsg(socket, event.group_id, sentence);
-            else sendGroupMsg(socket, event.group_id, sentence_fail);
+        if(text.length!==0 && text[0]==='/' && event.user_id.toString()===config.owner){
+            text = text.slice(1);
+            const res = await runCode(text);
+            sendGroupMsg(socket, event.group_id, res.toString());
         }
 
-        if(text.toString()!== sentence_command && needRepeat(text)){
+        if(cmd.has(text.toString())) await cmd.get(text.toString())(event, socket);
+
+        if(!cmd.has(text.toString()) && needRepeat(text)){
             sendGroupMsg(socket, event.group_id, text);
         }
     }
