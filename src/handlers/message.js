@@ -24,8 +24,14 @@ export default async function(event, socket) {
 
         if(text.length!==0 && text[0]==='/' && event.user_id.toString()===config.owner){
             text = text.slice(1);
-            const res = await runCode(text);
-            sendGroupMsg(socket, event.group_id, res.toString());
+            let res = await runCode(text);
+            try{
+                res = res.toString();
+                sendGroupMsg(socket, event.group_id, res);
+            }
+            catch(err){
+                sendGroupMsg(socket, event.group_id, err.toString());
+            }
         }
 
         if(cmd.has(text.toString())) await cmd.get(text.toString())(event, socket);
