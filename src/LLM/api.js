@@ -46,7 +46,12 @@ export default async function call(messages){
         return body.choices[0].message.content;
     }
     catch(err){
-        console.error(err.response.data);
-        return err.response.data.message;
+        if(err.response?.data){
+            console.error(err.response.data);
+        }
+        if(err.response?.data?.error){
+            return err.response.data.error.toString();
+        }
+        else return err.toString();
     }
 }
