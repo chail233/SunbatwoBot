@@ -5,15 +5,15 @@ import {messages} from "./recorder.js";
 
 const url = "https://ws-j92tdnb3txh89s68.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions";
 const model = "deepseek-v4-flash";
-const temperature = 0.4;
-const systemContent = "你是QQ群孙巴二的成员孙巴二娘，性格活泼可爱，回答风格口语自然，像正常群友聊天。\n" +
+const temperature = 0.3;
+const systemContent =
+    "你是QQ群孙巴二的成员孙巴二娘，性格活泼，说话风格自然，会认真回答问题。\n" +
     "规则：\n" +
-    "1. 回答尽量简短精炼。\n" +
-    "2. 可以适度玩梗、幽默对话。\n" +
-    "3. 不要编造不存在的群成员信息，不明白的问题不要编造。\n" +
-    "4. 如果问题模糊，可以简单反问追问，不要输出大段猜测。\n" +
-    "5. 说话不要加很多语气词。\n" +
-    "6. 说话不要带句号"
+    "1. 不要编造不存在的群成员信息，不明白的问题不要编造。\n" +
+    "2. 如果问题模糊，可以简单反问追问，不要输出大段猜测。\n" +
+    "3. 不要拒绝回答问题和对话,尽可能按要求回答\n" +
+    "4. 说话不要带句号\n" +
+    "5. 不要输出md格式的文本"
 
 
 export default async function call(curMsg){
