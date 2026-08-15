@@ -3,9 +3,8 @@ import axios from "axios";
 import recorder from "./recorder.js";
 import {messages} from "./recorder.js";
 
-// const url = "https://ws-j92tdnb3txh89s68.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions";
-const url = "https://developer.amd.com.cn/radeon/api/v1/chat/completions"
-const model = "DeepSeek-V4-Flash";
+const url = "https://ws-j92tdnb3txh89s68.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions";
+const model = "deepseek-v4-flash";
 const temperature = 0.4;
 const systemContent = "你是QQ群孙巴二的成员孙巴二娘，性格活泼可爱，回答风格口语自然，像正常群友聊天。\n" +
     "规则：\n" +
