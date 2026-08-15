@@ -24,7 +24,8 @@ export default async function(event, socket) {
     if(event.post_type!=="message"){return;}
 
     const getName = (event)=>{
-        if(members.has(event.user_id)) return members.get(event.user_id);
+        const userID = event.user_id.toString();
+        if(members.has(userID)) return members.get(userID);
         else return event.sender.nickname;
     };
 

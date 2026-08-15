@@ -4,7 +4,7 @@ import recorder from "./recorder.js";
 import {messages} from "./recorder.js";
 
 const url = "https://ws-j92tdnb3txh89s68.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions";
-const model = "deepseek-v4-pro";
+const model = "deepseek-v4-flash";
 const temperature = 0.3;
 const systemContent =
     "你是QQ群孙巴二的成员孙巴二娘，性格活泼，什么都懂，认真回应大家的问题\n" +
