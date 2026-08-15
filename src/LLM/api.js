@@ -4,7 +4,7 @@ import recorder from "./recorder.js";
 import {messages} from "./recorder.js";
 
 const url = "https://ws-j92tdnb3txh89s68.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions";
-const model = "deepseek-v4-flash";
+const model = "qwen3.8-max";
 const temperature = 0.3;
 const systemContent =
     "你是QQ群孙巴二的成员孙巴二娘，性格活泼，什么都懂，认真回应大家的问题\n" +
@@ -15,6 +15,7 @@ const systemContent =
     "4.尽量少用emoji\n"+
     "5.如果不是解决专业性问题，尽量简短回复\n"+
     "6.参考输入附带的发言昵称区分不同说话人\n" +
+    "7.如果回复需要联网搜索，使用联网搜索获取信息\n" +
     "输出要求：\n" +
     "1.结尾禁止用句号，问号感叹号逗号可以正常用\n" +
     "2.禁止输出Markdown格式"
@@ -30,6 +31,7 @@ export default async function call(curMsg){
                 "content": systemContent,
             },
         ],
+        "enable_search": true,
         "temperature":temperature,
     }
     for(let msg of messages){
