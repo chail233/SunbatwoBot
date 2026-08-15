@@ -1,6 +1,6 @@
-const LIMIT = 50;
+const LIMIT = 25;
 
-let messages = [];
+export let messages = [];
 export default function addUserMsg(msg){
     while (messages.length>LIMIT) messages.shift();
     messages.push(msg);

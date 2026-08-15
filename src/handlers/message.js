@@ -5,6 +5,7 @@ import getSentence from "./sentence.js";
 import getAcg from "./acg.js";
 import runCode from "./runcode.js";
 import chatAPI from "../LLM/api.js";
+import recorder from "../LLM/recorder.js";
 const cmd = new Map();
 const selfId = "1678766631";
 
@@ -29,14 +30,13 @@ export default async function(event, socket) {
         //模型对话
         for(let seg of event.message){
             if(seg.type==="at" && seg.data.qq===selfId){
-                const msg = [
-                    {
+                const msg = {
                     "role":"user",
                     "content":text
-                    },
-                ]
+                }
                 const res = await chatAPI(msg);
                 sendGroupMsg(socket, event.group_id, res);
+                return;
             }
         }
 
@@ -51,15 +51,25 @@ export default async function(event, socket) {
             catch(err){
                 sendGroupMsg(socket, event.group_id, err.toString());
             }
+            return;
         }
 
         //比对文本
-        if(cmd.has(text.toString())) await cmd.get(text.toString())(event, socket);
+        if(cmd.has(text.toString())) {
+            await cmd.get(text.toString())(event, socket);
+            return;
+        }
 
         //复读
         if(!cmd.has(text.toString()) && needRepeat(text)){
             sendGroupMsg(socket, event.group_id, text);
         }
+
+        //记录上下文
+        recorder({
+            "role": "user",
+            "content":text
+        });
     }
 }
 function extractText(message){
