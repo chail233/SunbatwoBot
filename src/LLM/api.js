@@ -35,7 +35,7 @@ export default async function call(messages){
                 "Content-Type": "application/json"
             },
             data: data,
-            timeout: 60000
+            timeout: 20000
         });
         const body = res.data;
         if (!body?.choices?.[0]?.message?.content) {
@@ -46,6 +46,7 @@ export default async function call(messages){
         return body.choices[0].message.content;
     }
     catch(err){
-        return err.toString();
+        console.error(err.response.data);
+        return err.response.data.message;
     }
 }
