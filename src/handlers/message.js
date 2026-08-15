@@ -6,6 +6,7 @@ import getAcg from "./acg.js";
 import runCode from "./runcode.js";
 import chatAPI from "../LLM/api.js";
 import recorder from "../LLM/recorder.js";
+import {members} from "./members.js";
 const cmd = new Map();
 const selfId = "1678766631";
 
@@ -22,6 +23,11 @@ cmd.set("来张图", async (event, socket)=>{
 export default async function(event, socket) {
     if(event.post_type!=="message"){return;}
 
+    const getName = (event)=>{
+        if(members.has(event.user_id)) return members.get(event.user_id);
+        else return event.sender.nickname;
+    };
+
     if(event.message_type==="group" && event.group_id.toString()===config.targetGroupId){
         let text = extractText(event.message);
         if(!text) return;
@@ -32,7 +38,7 @@ export default async function(event, socket) {
             if(seg.type==="at" && seg.data.qq===selfId){
                 const msg = {
                     "role":"user",
-                    "content":text
+                    "content":getName(event)+"对你说:"+text
                 }
                 const res = await chatAPI(msg);
                 sendGroupMsg(socket, event.group_id, res);
@@ -68,7 +74,7 @@ export default async function(event, socket) {
         //记录上下文
         recorder({
             "role": "user",
-            "content":text
+            "content":getName(event)+":"+text
         });
     }
 }
