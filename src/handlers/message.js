@@ -32,12 +32,20 @@ export default async function(event, socket) {
 
     if(event.message_type==="group" && event.group_id.toString()===config.targetGroupId){
         let text = extractText(event.message);
-        if(!text) return;
+        if(!text) {
+            for(let seg of event.message){
+                if(seg.type==="json" && seg.data?.meta?.detail_1?.title==="QQ经典农场"){
+                    sendGroupMsg(socket, event.group_id, "又在玩你那个农场");
+                }
+            }
+            return;
+        }
         console.log("received group message:", text);
 
-        //模型对话
+        //判断消息类型
         for(let seg of event.message){
             if(seg.type==="at" && seg.data.qq===selfId){
+                //模型对话
                 const msg = {
                     "role":"user",
                     "content":getName(event)+"对你说:"+text
@@ -73,6 +81,7 @@ export default async function(event, socket) {
         if(!cmd.has(text.toString()) && needRepeat(text)){
             sendGroupMsg(socket, event.group_id, text);
         }
+
 
         //触发主动对话
         if(msgWithoutChat >= chatLIMIT){
