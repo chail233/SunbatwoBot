@@ -11,3 +11,10 @@ export default async function(code){
         return err;
     }
 }
+
+function setModel(model_name){
+    return model = model_name;
+}
+function getModel(){
+    return model;
+}
