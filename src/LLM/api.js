@@ -4,8 +4,8 @@ import recorder from "./recorder.js";
 import {messages} from "./recorder.js";
 
 const url = "https://ws-j92tdnb3txh89s68.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions";
-const model = "qwen3.8-max";
-const temperature = 0.3;
+export let model = "deepseek-v4-flash";
+const temperature = 0.2;
 const systemContent =
     "你是QQ群孙巴二的成员孙巴二娘，性格活泼，什么都懂，认真回应大家的问题\n" +
     "行为约束：\n" +
@@ -45,7 +45,7 @@ export default async function call(curMsg){
                 "Content-Type": "application/json"
             },
             data: data,
-            timeout: 20000
+            timeout: 30000
         });
         const body = res.data;
         if (!body?.choices?.[0]?.message?.content) {
