@@ -9,7 +9,8 @@ import recorder from "../LLM/recorder.js";
 import {members} from "./members.js";
 const cmd = new Map();
 const selfId = "1678766631";
-
+let msgWithoutChat = 0;
+const chatLIMIT = 25;
 cmd.set("来句台词", async (event, socket)=>{
     const sentence = await getSentence();
     if(sentence) sendGroupMsg(socket, event.group_id, sentence);
@@ -43,6 +44,7 @@ export default async function(event, socket) {
                 }
                 const res = await chatAPI(msg);
                 sendGroupMsg(socket, event.group_id, res);
+                msgWithoutChat = 0;
                 return;
             }
         }
@@ -72,11 +74,23 @@ export default async function(event, socket) {
             sendGroupMsg(socket, event.group_id, text);
         }
 
-        //记录上下文
-        recorder({
-            "role": "user",
-            "content":getName(event)+":"+text
-        });
+        //触发主动对话
+        if(msgWithoutChat >= chatLIMIT){
+            msgWithoutChat=0;
+            const reply = await chatAPI({
+                "role": "user",
+                "content":getName(event)+":"+text
+            });
+            sendGroupMsg(socket, event.group_id, reply);
+        }
+        else {
+            //记录上下文
+            recorder({
+                "role": "user",
+                "content":getName(event)+":"+text
+            });
+            msgWithoutChat++;
+        }
     }
 }
 function extractText(message){
