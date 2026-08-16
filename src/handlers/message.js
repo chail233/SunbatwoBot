@@ -1,16 +1,17 @@
 import {sendGroupMsg} from "../websocket/act.js";
 import config from "../config.js";
-import needRepeat from "./repeater.js";
-import getSentence from "./sentence.js";
-import getAcg from "./acg.js";
-import runCode from "./runcode.js";
+import needRepeat from "../tools/repeater.js";
+import getSentence from "../tools/sentence.js";
+import getAcg from "../tools/acg.js";
+import runCode from "../tools/runcode.js";
 import chatAPI from "../LLM/api.js";
 import recorder from "../LLM/recorder.js";
-import {members} from "./members.js";
+import {members} from "../tools/members.js";
+import getSunGirl from "../tools/getSunGirl.js";
 const cmd = new Map();
 const selfId = "1678766631";
 let msgWithoutChat = 0;
-const chatLIMIT = 25;
+const chatLIMIT = 10;
 cmd.set("来句台词", async (event, socket)=>{
     const sentence = await getSentence();
     if(sentence) sendGroupMsg(socket, event.group_id, sentence);
@@ -19,6 +20,10 @@ cmd.set("来句台词", async (event, socket)=>{
 cmd.set("来张图", async (event, socket)=>{
     const img = await getAcg();
     sendGroupMsg(socket, event.group_id, img);
+});
+cmd.set("png", async (event, socket)=>{
+    const path = getSunGirl();
+    sendGroupMsg(socket, event.group_id, `[CQ:image,file="https://test.fukit.cn/autoupload/f/WYioeSs9VDAmJxUc7qF0wdiO_OyvX7mIgxFBfDMDErs/20260509/fgDx/240X270/%40XY1%7EKQOTV1N%7EFOWOS_9K%7E9.gif/webp"]`);
 });
 
 export default async function(event, socket) {
