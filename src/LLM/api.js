@@ -2,7 +2,6 @@ import config from "../config.js";
 import axios from "axios";
 import recorder from "./recorder.js";
 import {messages} from "./recorder.js";
-import * as tty from "node:tty";
 
 const url = "https://ws-j92tdnb3txh89s68.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions";
 export let model = "deepseek-v4-flash";
