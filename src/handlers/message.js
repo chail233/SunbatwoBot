@@ -7,7 +7,6 @@ import runCode from "../tools/runcode.js";
 import chatAPI from "../LLM/api.js";
 import recorder from "../LLM/recorder.js";
 import {members} from "../tools/members.js";
-import getSunGirl from "../tools/getSunGirl.js";
 const cmd = new Map();
 const selfId = "1678766631";
 let msgWithoutChat = 0;
@@ -20,10 +19,6 @@ cmd.set("来句台词", async (event, socket)=>{
 cmd.set("来张图", async (event, socket)=>{
     const img = await getAcg();
     sendGroupMsg(socket, event.group_id, img);
-});
-cmd.set("png", async (event, socket)=>{
-    const path = getSunGirl();
-    sendGroupMsg(socket, event.group_id, `[CQ:image,file="https://test.fukit.cn/autoupload/f/WYioeSs9VDAmJxUc7qF0wdiO_OyvX7mIgxFBfDMDErs/20260509/fgDx/240X270/%40XY1%7EKQOTV1N%7EFOWOS_9K%7E9.gif/webp"]`);
 });
 
 export default async function(event, socket) {
@@ -39,8 +34,10 @@ export default async function(event, socket) {
         let text = extractText(event.message);
         if(!text) {
             for(let seg of event.message){
-                if(seg.type==="json" && seg.data?.meta?.detail_1?.title==="QQ经典农场"){
-                    sendGroupMsg(socket, event.group_id, "又在玩你那个农场");
+                if(seg.type==="json" && seg.data){
+                    console.log("data", seg.data);
+                    sendGroupMsg(socket, event.group_id, "收到了小程序消息");
+                    sendGroupMsg(socket, event.group_id, [seg]);
                 }
             }
             return;

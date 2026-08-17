@@ -1,7 +1,13 @@
 import getIdx from "../common/getRandomNum.js";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
-const imgPath = "D:/Document/WebDev/SunbatwoBot/assets/SunbatwoGirl/";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const imgPath = join(__dirname, "../../assets/SunbatwoGirl");
 const MAX = 9;
 export default function (){
-    return imgPath + getIdx(0, MAX) + ".png";
+    const idx = getIdx(0, MAX);
+    const realPath = join(imgPath, `${idx}.png`);
+    return `file:///${realPath}`;
 }
