@@ -2,6 +2,7 @@ import config from "../config.js";
 import axios from "axios";
 import recorder from "./recorder.js";
 import {messages} from "./recorder.js";
+import * as tty from "node:tty";
 
 const url = "https://ws-j92tdnb3txh89s68.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions";
 export let model = "deepseek-v4-flash";
@@ -17,22 +18,33 @@ const systemContent =
     "6.参考输入附带的发言昵称区分不同说话人\n" +
     "7.如果回复需要联网搜索，使用联网搜索获取信息\n" +
     "输出要求：\n" +
-    "1.结尾禁止用句号，问号感叹号逗号可以正常用\n" +
-    "2.禁止输出Markdown格式"
+    "你可以根据情境决定消息一次发送还是分成多条发送以模仿网上聊天的效果，但必须以JSON格式输出，示例如下：\n" +
+    "{\n" +
+    "    \"action\":[\n" +
+    "        {\"cmd\":\"text\",\"content\":\"消息1内容\"},\n" +
+    "        {\"cmd\":\"text\",\"content\":\"消息2内容\"}\n" +
+    "    ]\n" +
+    "}\n"+
+    "action字段的值是一个数组，数组中每个对象有cmd和content两个字段，cmd代表消息类型，必须为text，content代表消息内容，由你决定。\n" +
+    "数组中的消息将按顺序发送，每条消息内容最后不许加句号。\n"+
+    "只输出JSON，不要任何额外解释、markdown代码块。"
 
 
 export default async function call(curMsg){
     recorder(curMsg);
     let data = {
-        "model": model,
-        "messages":[
+        model: model,
+        messages:[
             {
                 "role": "system",
                 "content": systemContent,
             },
         ],
-        "enable_search": true,
-        "temperature":temperature,
+        enable_search: true,
+        temperature:temperature,
+        response_format: {
+            type: "json_object"
+        }
     }
     for(let msg of messages){
         data.messages.push(msg);
@@ -53,18 +65,29 @@ export default async function call(curMsg){
         }
         console.log(body);
         // console.log(JSON.stringify(body.choices[0].message, null, 2));
+        let reply;
+        try{
+            reply = JSON.parse(body.choices[0].message.content);
+        }
+        catch(err){
+            return err.toString();//json解析错误
+        }
+        let replyContent = "";
+        reply.action.forEach(e => {
+            replyContent += `${e.content}\n`;
+        });
         recorder({
             "role": "assistant",
-            "content":body.choices[0].message.content
+            "content":replyContent
         });
-        return body.choices[0].message.content+`(${body.usage.total_tokens}tokens)`;
+        return {acts:reply.action, tokens:body.usage.total_tokens}
     }
     catch(err){
         if(err.response?.data){
-            console.error(err.response.data);
+            console.error(err.response.data.toString());
         }
         if(err.response?.data?.error?.message){
-            return err.response.data.error.message;
+            return err.response.data.error.message.toString();
         }
         else return err.toString();
     }

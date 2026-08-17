@@ -8,6 +8,7 @@ import chatAPI from "../LLM/api.js";
 import recorder from "../LLM/recorder.js";
 import {members} from "../tools/members.js";
 import getSunGirl from "../tools/getSunGirl.js";
+import sleep from "../common/sleep.js";
 const cmd = new Map();
 const selfId = "1678766631";
 let msgWithoutChat = 0;
@@ -61,7 +62,7 @@ export default async function(event, socket) {
                     "content":getName(event)+"对你说:"+text
                 }
                 const res = await chatAPI(msg);
-                sendGroupMsg(socket, event.group_id, res);
+                aiReply(socket, event.group_id, res);
                 msgWithoutChat = 0;
                 return;
             }
@@ -96,11 +97,11 @@ export default async function(event, socket) {
         //触发主动对话
         if(msgWithoutChat >= chatLIMIT){
             msgWithoutChat=0;
-            const reply = await chatAPI({
+            const res = await chatAPI({
                 "role": "user",
                 "content":getName(event)+":"+text
             });
-            sendGroupMsg(socket, event.group_id, reply);
+            aiReply(socket, event.group_id, res);
         }
         else {
             //记录上下文
@@ -114,4 +115,19 @@ export default async function(event, socket) {
 }
 function extractText(message){
     return message.filter(x=>x.type==="text").map(x=>x.data.text).join("");
+}
+
+
+async function aiReply(socket, group_id, res){
+    let tk = false;
+    for (const act of res.acts) {
+        if(act.cmd==="text"){
+            if(!tk) {
+                tk = true;
+                act.content += `(${res.tokens}tokens)`;
+            }
+            sendGroupMsg(socket, group_id, act.content);
+        }
+        await sleep(1200+Math.floor(Math.random()*1000));
+    }
 }
