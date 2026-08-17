@@ -34,10 +34,11 @@ export default async function(event, socket) {
         let text = extractText(event.message);
         if(!text) {
             for(let seg of event.message){
-                if(seg.type==="json" && seg.data){
-                    console.log("data", seg.data);
-                    sendGroupMsg(socket, event.group_id, "收到了小程序消息");
-                    sendGroupMsg(socket, event.group_id, [seg]);
+                if(seg.type==="json" && JSON.parse(seg.data?.data)?.meta?.detail_1?.title==="QQ经典农场"){
+                    sendGroupMsg(socket, event.group_id, "又在玩你那个破农场");
+                }
+                if(seg.type==="json" && JSON.parse(seg.data?.data)?.meta?.detail_1?.title==="哔哩哔哩"){
+                    sendGroupMsg(socket, event.group_id, "又在搬史是吧");
                 }
             }
             return;
