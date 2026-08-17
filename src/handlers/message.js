@@ -7,6 +7,7 @@ import runCode from "../tools/runcode.js";
 import chatAPI from "../LLM/api.js";
 import recorder from "../LLM/recorder.js";
 import {members} from "../tools/members.js";
+import getSunGirl from "../tools/getSunGirl.js";
 const cmd = new Map();
 const selfId = "1678766631";
 let msgWithoutChat = 0;
@@ -20,6 +21,12 @@ cmd.set("来张图", async (event, socket)=>{
     const img = await getAcg();
     sendGroupMsg(socket, event.group_id, img);
 });
+cmd.set("来只孙巴二娘", async (event, socket)=>{
+    sendGroupMsg(socket, event.group_id, [{type:"image",data:{file:getSunGirl()}}]);
+});
+cmd.set("来只牛魔", async (event, socket)=>{
+    sendGroupMsg(socket, event.group_id, [{type:"image", data:{file:"https://img.tofaka.com/autoupload/f/8d522/20260817/myLT/2048X2048/0.png"}}])
+})
 
 export default async function(event, socket) {
     if(event.post_type!=="message"){return;}

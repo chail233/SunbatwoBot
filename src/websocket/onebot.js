@@ -17,14 +17,3 @@ export async function startOneBotWS(){
     });
 }
 
-function waitSocketReady() {
-    return new Promise(resolve => {
-        const timer = setInterval(() => {
-            const sock = socket;
-            if (sock) {
-                clearInterval(timer);
-                resolve(sock);
-            }
-        }, 100);
-    });
-}
