@@ -1,4 +1,4 @@
-const LIMIT = 25;
+const LIMIT = 50;
 
 export let messages = [];
 export default function addUserMsg(msg){
