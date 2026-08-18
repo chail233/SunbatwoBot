@@ -18,8 +18,20 @@ let msgWithoutChat = 0;
 const chatLIMIT = 10;
 cmd.set("来句台词", async (event, socket)=>{
     const sentence = await getSentence();
-    if(sentence) sendGroupMsg(socket, event.group_id, sentence);
-    else sendGroupMsg(socket, event.group_id, "别急");
+    if(sentence) {
+        sendGroupMsg(socket, event.group_id, sentence);
+        recorder({
+            "role": "assistant",
+            "content":sentence
+        });
+    }
+    else {
+        sendGroupMsg(socket, event.group_id, "别急");
+        recorder({
+            "role": "assistant",
+            "content":"别急"
+        });
+    }
 });
 cmd.set("来张图", async (event, socket)=>{
     const img = await getAcg();
@@ -41,39 +53,37 @@ const getName = (event)=>{
 
 export default async function(event, socket) {
     if(event.post_type!=="message"){return;}
-
+    let pre = getName(event)+":\n";
+    let content = "";
     if(event.message_type==="group" && event.group_id.toString()===config.targetGroupId){
         let text = extractText(event.message);
-        if(!text) {
-            for(let seg of event.message){
-                if(seg.type==="json" && JSON.parse(seg.data?.data)?.meta?.detail_1?.title==="QQ经典农场"){
-                    recordMsg(socket, event, "[分享了QQ农场]");
-                    return;
-                }
-                if(seg.type==="json" && JSON.parse(seg.data?.data)?.meta?.detail_1?.title==="哔哩哔哩"){
-                    // sendGroupMsg(socket, event.group_id, "又在搬史是吧");
-                    console.log("哔哩哔哩分享:",JSON.parse(seg.data.data));
-                    return;
-                }
-                if(seg.type==="image"){
-                    const fileData = await getImage(seg.data.file);
-                    // console.log("file信息：",fileData);
-                    const buf = await fs.readFile(fileData.data.file.toString());
-                    const base64 = buf.toString("base64");
-                    const reply = await imgApi(base64);
-                    text = `[发送了图片，内容描述：${reply}]`;
-                }
-            }
-        }
-        console.log("received group message:", text);
-
-        //判断消息类型
+        content = text;
         for(let seg of event.message){
+            if(seg.type==="json" && JSON.parse(seg.data?.data)?.meta?.detail_1?.title==="QQ经典农场"){
+                recordMsg(socket, event, pre+"[分享了QQ农场]");
+                return;
+            }
+            if(seg.type==="json" && JSON.parse(seg.data?.data)?.meta?.detail_1?.title==="哔哩哔哩"){
+                // sendGroupMsg(socket, event.group_id, "又在搬史是吧");
+                recordMsg(socket, event, pre+"[分享了哔哩哔哩视频]");
+                console.log("哔哩哔哩分享:",JSON.parse(seg.data.data));
+                return;
+            }
+            if(seg.type==="image"){
+                const fileData = await getImage(seg.data.file);
+                // console.log("file信息：",fileData);
+                const buf = await fs.readFile(fileData.data.file.toString());
+                const base64 = buf.toString("base64");
+                const reply = await imgApi(base64);
+                content += "\n"+reply;
+            }
+            console.log("received group message:", text);
             if(seg.type==="at" && seg.data.qq===selfId){
                 //模型对话
+                pre = getName(event)+"对你说:\n";
                 const msg = {
                     "role":"user",
-                    "content":getName(event)+"对你说:"+text
+                    "content":pre+content
                 }
                 const res = await chatAPI(msg);
                 aiReply(socket, event.group_id, res);
@@ -81,7 +91,6 @@ export default async function(event, socket) {
                 return;
             }
         }
-
         //判断指令
         if(text.length!==0 && text[0]==='/' && event.user_id.toString()===config.owner){
             text = text.slice(1);
@@ -105,9 +114,13 @@ export default async function(event, socket) {
         //复读
         if(!cmd.has(text.toString()) && needRepeat(text)){
             sendGroupMsg(socket, event.group_id, text);
+            recorder({
+                "role": "assistant",
+                "content":text
+            });
         }
 
-        await recordMsg(socket, event, text);
+        await recordMsg(socket, event, pre+content);
     }
 }
 function extractText(message){
@@ -136,7 +149,7 @@ async function recordMsg(socket, event, text){
         msgWithoutChat=0;
         const res = await chatAPI({
             "role": "user",
-            "content":getName(event)+":"+text
+            "content":text
         });
         aiReply(socket, event.group_id, res);
     }
@@ -144,9 +157,9 @@ async function recordMsg(socket, event, text){
         //记录上下文
         recorder({
             "role": "user",
-            "content":getName(event)+":"+text
+            "content":text
         });
-        console.log("记录"+text);
+        // console.log("记录"+text);
         msgWithoutChat++;
     }
 }
