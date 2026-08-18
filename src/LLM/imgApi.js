@@ -22,7 +22,6 @@ export default async function call(base64, type){
                 ]
             }
         ],
-        max_completion_tokens:2048
     }
     try {
         const res = await axios(url, {

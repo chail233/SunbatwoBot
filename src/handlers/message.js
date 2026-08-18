@@ -84,11 +84,11 @@ export default async function(event, socket) {
                     content += "\n"+`[发送了图片，内容描述：${reply}]`;
                 }
             }
-            if(content)console.log("received group message:", content);
             if(seg.type==="at" && seg.data.qq===selfId){
                 aiMode = true;
             }
         }
+        if(content)console.log("received group content:", content);
         if(aiMode){
             //模型对话
             pre = getName(event)+"对你说:\n";
