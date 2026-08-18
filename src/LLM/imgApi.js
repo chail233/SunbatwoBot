@@ -2,7 +2,12 @@ import config from "../config.js";
 import axios from "axios";
 const url = "https://ws-j92tdnb3txh89s68.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions";
 export const model = "qwen3.7-plus";
-export default async function call(base64){
+export default async function call(base64, type){
+    let desc;
+    if(type === "jpg") desc = "image/jpeg";
+    else if(type === "png") desc = "image/png";
+    else if(type === "webp") desc = "image/webp";
+    else return null;
     let data = {
         model: model,
         messages: [
@@ -12,7 +17,7 @@ export default async function call(base64){
                     // PNG图像：  data:image/png;base64,${base64Image}
                     // JPEG图像： data:image/jpeg;base64,${base64Image}
                     // WEBP图像： data:image/webp;base64,${base64Image}
-                    "image_url": {"url": `data:image/jpeg;base64,${base64}`},},
+                    "image_url": {"url": `data:${desc};base64,${base64}`},},
                     {"type": "text", "text": "请准确描述这张图片的内容，回答长度适中，只输出描述，不要带有其它格式的内容。"}
                 ]
             }

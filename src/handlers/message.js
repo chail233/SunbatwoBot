@@ -12,6 +12,7 @@ import sleep from "../common/sleep.js";
 import {getImage} from "../http_server/api.js";
 import fs from "fs/promises";
 import imgApi from "../LLM/imgApi.js";
+import getImageType from "../common/getImageType.js";
 const cmd = new Map();
 const selfId = "1678766631";
 let msgWithoutChat = 0;
@@ -59,7 +60,7 @@ export default async function(event, socket) {
         let content = "";
         let aiMode = false;
         let text = extractText(event.message);
-        content = text;
+        if(text)content = text;
         for(let seg of event.message){
             if(seg.type==="json" && JSON.parse(seg.data?.data)?.meta?.detail_1?.title==="QQ经典农场"){
                 recordMsg(socket, event, pre+"[分享了QQ农场]");
@@ -74,11 +75,14 @@ export default async function(event, socket) {
             if(seg.type==="image"){
                 const fileData = await getImage(seg.data.file);
                 // console.log("file信息：",fileData);
-                const buf = await fs.readFile(fileData.data.file.toString());
+                const type = getImageType(seg.data.file);
+                const buf = await fs.readFile(fileData.data.file);
                 const base64 = buf.toString("base64");
-                const reply = await imgApi(base64);
-                console.log("图片识别结果"+reply);
-                content += "\n"+reply;
+                const reply = await imgApi(base64, type);
+                if(reply){
+                    console.log("图片识别结果"+reply);
+                    content += "\n"+reply;
+                }
             }
             console.log("received group message:", text);
             if(seg.type==="at" && seg.data.qq===selfId){
