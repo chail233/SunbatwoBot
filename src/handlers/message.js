@@ -9,6 +9,9 @@ import recorder from "../LLM/recorder.js";
 import {members} from "../tools/members.js";
 import getSunGirl from "../tools/getSunGirl.js";
 import sleep from "../common/sleep.js";
+import {getImage} from "../http_server/api.js";
+import fs from "fs/promises";
+import imgApi from "../LLM/imgApi.js";
 const cmd = new Map();
 const selfId = "1678766631";
 let msgWithoutChat = 0;
@@ -44,14 +47,23 @@ export default async function(event, socket) {
         if(!text) {
             for(let seg of event.message){
                 if(seg.type==="json" && JSON.parse(seg.data?.data)?.meta?.detail_1?.title==="QQ经典农场"){
-                    await recordMsg(socket, event, "[分享了QQ农场]");
+                    recordMsg(socket, event, "[分享了QQ农场]");
+                    return;
                 }
                 if(seg.type==="json" && JSON.parse(seg.data?.data)?.meta?.detail_1?.title==="哔哩哔哩"){
                     // sendGroupMsg(socket, event.group_id, "又在搬史是吧");
                     console.log("哔哩哔哩分享:",JSON.parse(seg.data.data));
+                    return;
+                }
+                if(seg.type==="image"){
+                    const fileData = await getImage(seg.data.file);
+                    // console.log("file信息：",fileData);
+                    const buf = await fs.readFile(fileData.data.file.toString());
+                    const base64 = buf.toString("base64");
+                    const reply = await imgApi(base64);
+                    text = `[发送了图片，内容描述：${reply}]`;
                 }
             }
-            return;
         }
         console.log("received group message:", text);
 
@@ -134,6 +146,7 @@ async function recordMsg(socket, event, text){
             "role": "user",
             "content":getName(event)+":"+text
         });
+        console.log("记录"+text);
         msgWithoutChat++;
     }
 }
