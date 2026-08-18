@@ -29,24 +29,26 @@ cmd.set("来只牛魔", async (event, socket)=>{
     sendGroupMsg(socket, event.group_id, [{type:"image", data:{file:"https://img.tofaka.com/autoupload/f/8d522/20260817/myLT/2048X2048/0.png"}}])
 })
 
+//获取qq昵称
+const getName = (event)=>{
+    const userID = event.user_id.toString();
+    if(members.has(userID)) return members.get(userID);
+    else return event.sender.nickname;
+};
+
 export default async function(event, socket) {
     if(event.post_type!=="message"){return;}
-
-    const getName = (event)=>{
-        const userID = event.user_id.toString();
-        if(members.has(userID)) return members.get(userID);
-        else return event.sender.nickname;
-    };
 
     if(event.message_type==="group" && event.group_id.toString()===config.targetGroupId){
         let text = extractText(event.message);
         if(!text) {
             for(let seg of event.message){
                 if(seg.type==="json" && JSON.parse(seg.data?.data)?.meta?.detail_1?.title==="QQ经典农场"){
-                    sendGroupMsg(socket, event.group_id, "又在玩你那个破农场");
+                    await recordMsg(socket, event, "[分享了QQ农场]");
                 }
                 if(seg.type==="json" && JSON.parse(seg.data?.data)?.meta?.detail_1?.title==="哔哩哔哩"){
-                    sendGroupMsg(socket, event.group_id, "又在搬史是吧");
+                    // sendGroupMsg(socket, event.group_id, "又在搬史是吧");
+                    console.log("哔哩哔哩分享:",JSON.parse(seg.data.data));
                 }
             }
             return;
@@ -93,24 +95,7 @@ export default async function(event, socket) {
             sendGroupMsg(socket, event.group_id, text);
         }
 
-
-        //触发主动对话
-        if(msgWithoutChat >= chatLIMIT){
-            msgWithoutChat=0;
-            const res = await chatAPI({
-                "role": "user",
-                "content":getName(event)+":"+text
-            });
-            aiReply(socket, event.group_id, res);
-        }
-        else {
-            //记录上下文
-            recorder({
-                "role": "user",
-                "content":getName(event)+":"+text
-            });
-            msgWithoutChat++;
-        }
+        await recordMsg(socket, event, text);
     }
 }
 function extractText(message){
@@ -129,5 +114,26 @@ async function aiReply(socket, group_id, res){
             sendGroupMsg(socket, group_id, act.content);
         }
         await sleep(1200+Math.floor(Math.random()*1000));
+    }
+}
+
+//常规记录
+async function recordMsg(socket, event, text){
+    //触发主动回复
+    if(msgWithoutChat >= chatLIMIT){
+        msgWithoutChat=0;
+        const res = await chatAPI({
+            "role": "user",
+            "content":getName(event)+":"+text
+        });
+        aiReply(socket, event.group_id, res);
+    }
+    else {
+        //记录上下文
+        recorder({
+            "role": "user",
+            "content":getName(event)+":"+text
+        });
+        msgWithoutChat++;
     }
 }

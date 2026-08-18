@@ -11,7 +11,7 @@ export async function startOneBotWS(){
         ws.on("message", async data=>{
             const event = JSON.parse(data);
             console.log("Received event:", event);
-            messageHandler(event, socket);
+            await messageHandler(event, socket);
         });
         console.log("ws listening on port: " + config.wsPort);
     });
