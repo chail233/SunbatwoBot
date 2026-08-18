@@ -53,9 +53,11 @@ const getName = (event)=>{
 
 export default async function(event, socket) {
     if(event.post_type!=="message"){return;}
-    let pre = getName(event)+":\n";
-    let content = "";
+
     if(event.message_type==="group" && event.group_id.toString()===config.targetGroupId){
+        let pre = getName(event)+":\n";
+        let content = "";
+        let aiMode = false;
         let text = extractText(event.message);
         content = text;
         for(let seg of event.message){
@@ -75,21 +77,24 @@ export default async function(event, socket) {
                 const buf = await fs.readFile(fileData.data.file.toString());
                 const base64 = buf.toString("base64");
                 const reply = await imgApi(base64);
+                console.log("图片识别结果"+reply);
                 content += "\n"+reply;
             }
             console.log("received group message:", text);
             if(seg.type==="at" && seg.data.qq===selfId){
-                //模型对话
-                pre = getName(event)+"对你说:\n";
-                const msg = {
-                    "role":"user",
-                    "content":pre+content
-                }
-                const res = await chatAPI(msg);
-                aiReply(socket, event.group_id, res);
-                msgWithoutChat = 0;
-                return;
+                aiMode = true;
             }
+        }
+        if(aiMode){
+            //模型对话
+            pre = getName(event)+"对你说:\n";
+            const msg = {
+                "role":"user",
+                "content":pre+content
+            }
+            const res = await chatAPI(msg);
+            aiReply(socket, event.group_id, res);
+            msgWithoutChat = 0;
         }
         //判断指令
         if(text.length!==0 && text[0]==='/' && event.user_id.toString()===config.owner){
