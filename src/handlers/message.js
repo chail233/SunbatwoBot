@@ -75,7 +75,7 @@ export default async function(event, socket) {
             if(seg.type==="image"){
                 const fileData = await getImage(seg.data.file);
                 // console.log("file信息：",fileData);
-                const type = getImageType(seg.data.file);
+                const type = getImageType(fileData.data.file);
                 const buf = await fs.readFile(fileData.data.file);
                 const base64 = buf.toString("base64");
                 const reply = await imgApi(base64, type);
