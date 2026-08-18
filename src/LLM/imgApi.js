@@ -22,6 +22,7 @@ export default async function call(base64, type){
                 ]
             }
         ],
+        max_completion_tokens:2048
     }
     try {
         const res = await axios(url, {
@@ -44,12 +45,7 @@ export default async function call(base64, type){
         return reply;
     }
     catch(err){
-        if(err.response?.data){
-            console.error(err.response.data.toString());
-        }
-        if(err.response?.data?.error?.message){
-            return err.response.data.error.message.toString();
-        }
-        else return err.toString();
+        console.error("识图api错误："+err.toString());
+        return null;
     }
 }

@@ -81,10 +81,10 @@ export default async function(event, socket) {
                 const reply = await imgApi(base64, type);
                 if(reply){
                     console.log("图片识别结果"+reply);
-                    content += "\n"+reply;
+                    content += "\n"+`[发送了图片，内容描述：${reply}]`;
                 }
             }
-            console.log("received group message:", text);
+            if(content)console.log("received group message:", content);
             if(seg.type==="at" && seg.data.qq===selfId){
                 aiMode = true;
             }
