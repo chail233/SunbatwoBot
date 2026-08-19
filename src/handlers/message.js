@@ -14,6 +14,7 @@ import fs from "fs/promises";
 import imgApi from "../LLM/imgApi.js";
 import getImageType from "../common/getImageType.js";
 import {getWeatherText} from "../tools/qweather.js";
+import schedule from "node-schedule";
 const cmd = new Map();
 const userCmd = new Map();
 const selfId = "1678766631";
@@ -203,4 +204,17 @@ function parseCommand(rawText) {
     const cmd = parts[0];
     const args = parts.slice(1);
     return { cmd, args };
+}
+
+export function init(socket) {
+    // 每天 09:30:00
+    schedule.scheduleJob("0 30 9 * * *", sendWeather(socket));
+}
+
+async function sendWeather(socket){
+    const cities = ["三门峡","郑州","杭州", "玉溪"];
+    for(const city of cities){
+        const weather = await getWeatherText(city);
+        sendGroupMsg(socket, config.targetGroupId, weather);
+    }
 }

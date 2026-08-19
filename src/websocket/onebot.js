@@ -1,6 +1,7 @@
 import {WebSocketServer} from 'ws';
 import config from "../config.js";
 import messageHandler from "../handlers/message.js";
+import {init} from "../handlers/message.js";
 let socket=null;
 //创建 OneBot WebSocket 服务
 export async function startOneBotWS(){
@@ -8,6 +9,7 @@ export async function startOneBotWS(){
     wss.on("connection", ws => {
         console.log("Connected!");
         socket = ws;
+        init(socket);
         ws.on("message", async data=>{
             const event = JSON.parse(data);
             console.log("Received event:", event);
