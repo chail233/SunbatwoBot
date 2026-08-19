@@ -1,5 +1,3 @@
-import {model} from "../LLM/api.js"
-
 const AsyncFunction = async function(){}.constructor;
 
 export default async function(code){
@@ -10,11 +8,4 @@ export default async function(code){
     catch(err){
         return err;
     }
-}
-
-function setModel(model_name){
-    return model = model_name;
-}
-function getModel(){
-    return model;
 }

@@ -62,14 +62,10 @@ export default async function(event, socket) {
         let text = extractText(event.message);
         if(text)content = text;
         for(let seg of event.message){
-            if(seg.type==="json" && JSON.parse(seg.data?.data)?.meta?.detail_1?.title==="QQ经典农场"){
-                recordMsg(socket, event, pre+"[分享了QQ农场]");
-                return;
-            }
-            if(seg.type==="json" && JSON.parse(seg.data?.data)?.meta?.detail_1?.title==="哔哩哔哩"){
-                // sendGroupMsg(socket, event.group_id, "又在搬史是吧");
-                recordMsg(socket, event, pre+"[分享了哔哩哔哩视频]");
-                console.log("哔哩哔哩分享:",JSON.parse(seg.data.data));
+            if(seg.type==="json" && JSON.parse(seg.data?.data)?.meta?.detail_1?.title){
+                const title = JSON.parse(seg.data.data).meta.detail_1.title;
+                console.log("小程序消息", seg.data.data)
+                recordMsg(socket, event, pre+`[分享了${title}消息]`);
                 return;
             }
             if(seg.type==="image"){
