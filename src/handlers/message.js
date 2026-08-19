@@ -14,7 +14,6 @@ import fs from "fs/promises";
 import imgApi from "../LLM/imgApi.js";
 import getImageType from "../common/getImageType.js";
 import {getWeatherText} from "../tools/qweather.js";
-import schedule from "node-schedule";
 const cmd = new Map();
 const userCmd = new Map();
 const selfId = "1678766631";
