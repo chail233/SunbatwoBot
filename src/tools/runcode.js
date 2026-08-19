@@ -3,7 +3,9 @@ const AsyncFunction = async function(){}.constructor;
 export default async function(code){
     const fun = new AsyncFunction(code);
     try{
-        return await fun();
+        let res = await fun();
+        if(!res) res = "执行完毕";
+        return res;
     }
     catch(err){
         return err;

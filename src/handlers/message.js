@@ -13,7 +13,9 @@ import {getImage} from "../http_server/api.js";
 import fs from "fs/promises";
 import imgApi from "../LLM/imgApi.js";
 import getImageType from "../common/getImageType.js";
+import {getWeatherText} from "../tools/qweather.js";
 const cmd = new Map();
+const userCmd = new Map();
 const selfId = "1678766631";
 let msgWithoutChat = 0;
 const chatLIMIT = 10;
@@ -45,6 +47,10 @@ cmd.set("来只牛魔", async (event, socket)=>{
     sendGroupMsg(socket, event.group_id, [{type:"image", data:{file:"https://img.tofaka.com/autoupload/f/8d522/20260817/myLT/2048X2048/0.png"}}])
 })
 
+
+userCmd.set("gw", async (args)=>{
+    return await getWeatherText(args[0]);
+});
 //获取qq昵称
 const getName = (event)=>{
     const userID = event.user_id.toString();
@@ -110,6 +116,17 @@ export default async function(event, socket) {
             return;
         }
 
+        if(text.length!==0 && text[0]==='#'){
+            const res = parseCommand(text);
+            if(!res.cmd || !res.args.length){
+                sendGroupMsg(socket, event.group_id, "指令格式无效");
+            }
+            else{
+                const cmdres = await userCmd.get(res.cmd)(res.args);
+                sendGroupMsg(socket, event.group_id, cmdres);
+            }
+        }
+
         //比对文本
         if(cmd.has(text.toString())) {
             await cmd.get(text.toString())(event, socket);
@@ -117,7 +134,7 @@ export default async function(event, socket) {
         }
 
         //复读
-        if(!cmd.has(text.toString()) && needRepeat(text)){
+        if(text && !cmd.has(text.toString()) && text[0]!=="#" && needRepeat(text)){
             sendGroupMsg(socket, event.group_id, text);
             recorder({
                 "role": "assistant",
@@ -167,4 +184,23 @@ async function recordMsg(socket, event, text){
         // console.log("记录"+text);
         msgWithoutChat++;
     }
+}
+
+
+/**
+ * 解析指令
+ * @param {string} rawText 消息文本
+ * @returns {{cmd:string|null, args:string[]}}
+ */
+function parseCommand(rawText) {
+    const text = rawText.trim();
+    // 指令前缀 #
+    if (!text.startsWith("#")) {
+        return { cmd: null, args: [] };
+    }
+    // 去掉#，按空白分割
+    const parts = text.slice(1).split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+    return { cmd, args };
 }
