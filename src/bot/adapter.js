@@ -18,7 +18,7 @@ export class OneBotAdapter {
         ws.on("message", (data) => {
             try {
                 const event = JSON.parse(data.toString());
-                logger.debug("收到事件:", event.post_type, event.message_type);
+                logger.debug("收到事件:", event);
                 if (this._eventHandler) {
                     this._eventHandler(event);
                 }

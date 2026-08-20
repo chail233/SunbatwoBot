@@ -27,7 +27,8 @@ export function startOneBotServer(onEvent) {
         adapter.onEvent(async (event) => {
             try {
                 await onEvent(event, adapter);
-            } catch (err) {
+            }
+            catch (err) {
                 logger.error("事件处理出错:", err);
             }
         });
