@@ -37,20 +37,15 @@ const SYSTEM_PROMPT =
 
 /**
  * 发送一条用户消息给 AI，获取回复
- * @param {{role: string, content: string}} curMsg 当前用户消息
  * @returns {Promise<ChatResult|string>}
  *   成功返回 {acts, tokens}，失败返回错误字符串
  */
-export default async function chat(curMsg) {
-    // 记录用户消息
-    chatRecorder.add(curMsg);
-
+export default async function chat() {
     // 构造请求消息列表
     const messages = [
         { role: "system", content: SYSTEM_PROMPT },
         ...chatRecorder.getAll(),
     ];
-
     const result = await callLLM({
         model: CHAT_MODEL,
         messages,

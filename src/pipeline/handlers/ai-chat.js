@@ -3,6 +3,7 @@
 import chatAPI from "../../llm/chat.js";
 import sleep from "../../utils/sleep.js";
 import logger from "../../utils/logger.js";
+import chatrecorder from "../../llm/recorder.js";
 
 /**
  * AI 对话处理器
@@ -42,10 +43,10 @@ export default async function aiChat(ctx) {
         role: "user",
         content: `${ctx.senderName}对你说:\n${content}`,
     };
-
+    chatrecorder.add(msg);
     logger.info("AI 对话请求:", content);
 
-    const res = await chatAPI(msg);
+    const res = await chatAPI();
     if (typeof res === "string") {
         // 错误响应
         ctx.adapter.sendGroupMsg(ctx.event.group_id, res);

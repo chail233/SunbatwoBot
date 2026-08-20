@@ -21,23 +21,19 @@ let msgWithoutChat = 0;
 export default async function proactiveChat(ctx) {
     const text = ctx.text + (ctx.imageDescription ? `\n${ctx.imageDescription}` : "");
     const pre = `${ctx.senderName}:\n`;
-
+    recorder.add({ role: "user", content: pre + text });
     // 检查是否达到主动触发阈值
     if (msgWithoutChat >= PROACTIVE_CHAT_LIMIT) {
         logger.info("达到主动聊天阈值，触发 AI 对话");
         msgWithoutChat = 0;
-        const res = await chatAPI({
-            role: "user",
-            content: pre + text,
-        });
+        const res = await chatAPI();
         if (typeof res !== "string") {
             await sendAiReply(ctx.adapter, ctx.event.group_id, res);
         }
         return true;
     }
 
-    // 未达到阈值，仅记录上下文
-    recorder.add({ role: "user", content: pre + text });
+    // 未达到阈值
     msgWithoutChat++;
     return false;
 }
