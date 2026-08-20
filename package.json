@@ -1,14 +1,14 @@
 {
   "name": "sunbatwobot",
   "version": "1.1.0",
-  "description": "",
+  "description": "A OneBot11 QQ bot based on NapCat, supports LLM conversation, image vision capability and custom message processing.",
   "scripts": {
     "start": "node src/index.js"
   },
-  "private": true,
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "private": false,
+  "keywords": ["onebot11","napcat","qq‑bot"],
+  "author": "chail233",
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "axios": "^1.19.0",

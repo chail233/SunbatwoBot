@@ -15,6 +15,14 @@
 - Node.js >= 18
 - NapCat 客户端已运行并配置好反向 WebSocket 连接（详见NapCat文档）
 
+### 获取代码与安装依赖
+``` bash
+# 拉取代码
+git clone https://github.com/chail233/SunbatwoBot
+# 安装依赖
+npm install
+```
+
 ### 配置
 
 创建 `.env` 文件并填写配置：
