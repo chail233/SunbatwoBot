@@ -6,7 +6,7 @@
  */
 
 const LOG_LEVELS = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3 };
-const CURRENT_LEVEL = LOG_LEVELS.INFO; // 可改为 DEBUG 输出更多
+const CURRENT_LEVEL = LOG_LEVELS.DEBUG;
 
 function timestamp() {
     return new Date().toISOString();

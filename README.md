@@ -71,8 +71,6 @@ src/
 │   ├── index.js                # 管道编排器：串联中间件 → 处理器
 │   ├── context.js              # 上下文构建器：从事件提取通用信息
 │   ├── middleware/             # 中间件：全部执行，丰富上下文
-│   │   ├── extract-text.js     # 提取纯文本
-│   │   ├── resolve-name.js     # 解析发送者昵称
 │   │   ├── image-recognizer.js # 自动识别图片内容
 │   │   ├── at-detector.js      # 检测是否 @机器人
 │   │   └── mini-program.js     # 处理小程序/链接分享

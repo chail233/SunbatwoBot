@@ -4,8 +4,6 @@ import logger from "../utils/logger.js";
 import { buildContext } from "./context.js";
 
 // 中间件（按顺序执行，全部执行）
-import extractText from "./middleware/extract-text.js";
-import resolveName from "./middleware/resolve-name.js";
 import imageRecognizer from "./middleware/image-recognizer.js";
 import atDetector from "./middleware/at-detector.js";
 import miniProgram from "./middleware/mini-program.js";
@@ -20,8 +18,6 @@ import proactiveChat from "./handlers/proactive-chat.js";
 
 /** 中间件列表 */
 const middlewares = [
-    extractText,
-    resolveName,
     imageRecognizer,
     atDetector,
     miniProgram,
