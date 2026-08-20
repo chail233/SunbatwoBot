@@ -27,7 +27,7 @@ export async function sendAiReply(adapter, groupId, res) {
             }
             adapter.sendGroupMsg(groupId, content);
         }
-        await sleep(1800 + Math.floor(Math.random() * 1000));
+        await sleep(3000 + Math.floor(Math.random() * 1000));
     }
 }
 

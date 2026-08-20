@@ -9,7 +9,7 @@
 export const CHAT_HISTORY_LIMIT = 50;
 
 /** 无主动对话时，多少条消息后触发主动聊天 */
-export const PROACTIVE_CHAT_LIMIT = 10;
+export const PROACTIVE_CHAT_LIMIT = 15;
 
 /** LLM API 基础地址 */
 export const LLM_API_URL =
