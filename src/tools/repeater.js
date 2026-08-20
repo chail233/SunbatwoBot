@@ -1,4 +1,4 @@
-import queue from "../common/queue.js";
+import queue from "../utils/queue.js";
 
 const blackname = new Set();
 const messageQueue = new queue();
