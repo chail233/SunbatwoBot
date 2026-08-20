@@ -1,17 +1,23 @@
 # SunbatwoBot
 
-基于 NapCat + OneBot v11 协议的 QQ 机器人服务端。
+这是一个基于 NapCat + OneBot v11 协议的 QQ 机器人服务端。包含了一些已经开发好的功能，
+如关键词识别、执行指令、ai对话等。
+
+该项目的AI对话还在继续开发中，目前已经支持识别图片内容，区别不同的发言人，主动发言，发送多条消息，
+联网搜索...
+
+你可以快速地配置并使用该项目，或者扩展开发自己想要的功能。
 
 ## 快速开始
 
 ### 环境要求
 
 - Node.js >= 18
-- NapCat 客户端已运行并配置好反向 WebSocket 连接
+- NapCat 客户端已运行并配置好反向 WebSocket 连接（详见NapCat文档）
 
 ### 配置
 
-复制 `.env` 文件并填写配置：
+创建 `.env` 文件并填写配置：
 
 ```env
 # WebSocket 服务端口（NapCat 反向连接端口）
@@ -39,6 +45,43 @@ AI_APIKEY=sk-xxx
 QWEATHER_KEY=your_key_here
 ```
 
+在`consts.js`中配置所需的url，以及更改运行时常量。如果不需要某些功能，可以只填写占位符。
+``` js
+/** 对话上下文最大记录条数 */
+export const CHAT_HISTORY_LIMIT = 50;
+
+/** 无主动对话时，多少条消息后触发主动聊天 */
+export const PROACTIVE_CHAT_LIMIT = 10;
+
+/** LLM API 基础地址 */
+export const LLM_API_URL =
+    "https://ws-j92tdnb3txh89s68.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions";
+
+/** 聊天模型名称 */
+export const CHAT_MODEL = "deepseek-v4-flash";
+
+/** 识图模型名称 */
+export const VISION_MODEL = "qwen3.7-plus";
+
+/** 聊天接口超时（毫秒） */
+export const LLM_TIMEOUT = 30000;
+
+/** 一言 API 限流：时间窗口 */
+export const SENTENCE_LIMIT_TIME = 10000;
+
+/** 一言 API 限流：窗口内最大次数 */
+export const SENTENCE_LIMIT_COUNT = 3;
+
+/** 复读检测队列长度 */
+export const REPEATER_QUEUE_SIZE = 10;
+
+/** 和风天气查询url */
+export const QW_BASE_URL = "https://m454e6xkq4.re.qweatherapi.com/v7";
+
+/**和风城市id查询url */
+export const QW_GEO_BASE = "https://m454e6xkq4.re.qweatherapi.com/geo/v2";
+```
+
 ### 启动
 
 ```bash
@@ -48,6 +91,8 @@ node src/index.js
 ```
 
 NapCat 配置反向 WebSocket 连接地址：`ws://127.0.0.1:8080/onebot/v11/ws`
+
+如果你的服务端和NapCat不在同一台机器，请填写该服务端所在设备的ip。
 
 ---
 
@@ -95,7 +140,7 @@ src/
 │   └── weather.js              # 和风天气 API
 │
 ├── data/                       # 静态数据
-│   ├── members.js              # QQ号 → 昵称映射
+│   ├── members.js              # QQ号 → 昵称映射（注意，这个需要自行配置）
 │   └── sunbatwo-girls.js       # 孙巴二娘图片 URL 列表
 │
 ├── tools/                      # 工具函数
@@ -131,8 +176,6 @@ pipeline/index.js 管道编排器
     ├─ 过滤：仅处理 message 事件 + 目标群
     │
     ├─ 中间件（全部执行）
-    │   ├─ extract-text      → ctx.text
-    │   ├─ resolve-name      → ctx.senderName
     │   ├─ image-recognizer  → ctx.imageDescription
     │   ├─ at-detector       → ctx.isAtBot
     │   └─ mini-program      → ctx.handled = true（若匹配）
