@@ -3,10 +3,11 @@
 import axios from "axios";
 import config from "../config/index.js";
 import logger from "../utils/logger.js";
+import {QW_BASE_URL, QW_GEO_BASE} from "../consts.js";
 
 const KEY = config.qweatherKEY;
-const BASE_URL = "https://m454e6xkq4.re.qweatherapi.com/v7";
-const GEO_BASE = "https://m454e6xkq4.re.qweatherapi.com/geo/v2";
+const BASE_URL = QW_BASE_URL;
+const GEO_BASE = QW_GEO_BASE;
 
 /** axios 实例，统一超时 */
 const api = axios.create({ timeout: 8000 });

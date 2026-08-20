@@ -32,3 +32,9 @@ export const SENTENCE_LIMIT_COUNT = 3;
 
 /** 复读检测队列长度 */
 export const REPEATER_QUEUE_SIZE = 10;
+
+/** 和风天气查询url */
+export const QW_BASE_URL = "https://m454e6xkq4.re.qweatherapi.com/v7";
+
+/**和风城市id查询url */
+export const QW_GEO_BASE = "https://m454e6xkq4.re.qweatherapi.com/geo/v2";

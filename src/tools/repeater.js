@@ -1,11 +1,12 @@
 import queue from "../utils/queue.js";
+import {REPEATER_QUEUE_SIZE} from "../consts.js";
 
 const blackname = new Set();
 const messageQueue = new queue();
 let l1="null";
 let l2="null";
 export default function received(message) {
-    if(messageQueue.size()>=10){
+    if(messageQueue.size()>=REPEATER_QUEUE_SIZE){
         const msg = messageQueue.pop();
         if(blackname.has(msg)){
             blackname.delete(msg);
