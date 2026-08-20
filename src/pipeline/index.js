@@ -55,7 +55,8 @@ export default async function runPipeline(event, adapter) {
     for (const mw of middlewares) {
         try {
             await mw(ctx);
-        } catch (err) {
+        }
+        catch (err) {
             logger.error("中间件执行出错:", mw.name, err);
         }
     }
@@ -71,7 +72,8 @@ export default async function runPipeline(event, adapter) {
                 logger.debug(`处理器已处理: ${handler.name}`);
                 break;
             }
-        } catch (err) {
+        }
+        catch (err) {
             logger.error("处理器执行出错:", handler.name, err);
         }
     }

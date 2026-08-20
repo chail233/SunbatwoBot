@@ -15,7 +15,7 @@ import logger from "../../utils/logger.js";
  * @param {string|number} groupId
  * @param {{acts: Array<{cmd: string, content: string}>, tokens: number}} res
  */
-async function sendAiReply(adapter, groupId, res) {
+export async function sendAiReply(adapter, groupId, res) {
     let first = true;
     for (const act of res.acts) {
         if (act.cmd === "text") {
@@ -26,7 +26,7 @@ async function sendAiReply(adapter, groupId, res) {
             }
             adapter.sendGroupMsg(groupId, content);
         }
-        await sleep(1200 + Math.floor(Math.random() * 1000));
+        await sleep(1800 + Math.floor(Math.random() * 1000));
     }
 }
 
@@ -49,7 +49,8 @@ export default async function aiChat(ctx) {
     if (typeof res === "string") {
         // 错误响应
         ctx.adapter.sendGroupMsg(ctx.event.group_id, res);
-    } else {
+    }
+    else {
         await sendAiReply(ctx.adapter, ctx.event.group_id, res);
     }
 
