@@ -43,6 +43,7 @@ export default async function recognizeImage(base64, type) {
                 ],
             },
         ],
+        enableSearch:false
     });
 
     if (!result) {

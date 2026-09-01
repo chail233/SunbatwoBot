@@ -16,11 +16,11 @@ export const LLM_API_URL =
     "https://ws-j92tdnb3txh89s68.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions";
 
 /** 聊天模型名称 */
-export let CHAT_MODEL = "qwen3.8-max";
+export let CHAT_MODEL = "deepseek-v4-flash";
 globalThis.model = CHAT_MODEL;
 
 /** 识图模型名称 */
-export const VISION_MODEL = "qwen3.7-plus";
+export const VISION_MODEL = "qwen3.7-flash";
 
 /** 聊天接口超时（毫秒） */
 export const LLM_TIMEOUT = 30000;
