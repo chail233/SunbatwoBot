@@ -22,8 +22,8 @@ globalThis.model = CHAT_MODEL;
 /** 识图模型名称 */
 export const VISION_MODEL = "qwen3.7-flash";
 
-/** 聊天接口超时（毫秒） */
-export const LLM_TIMEOUT = 30000;
+/** 模型接口超时（毫秒） */
+export const LLM_TIMEOUT = 60000;
 
 /** 一言 API 限流：时间窗口 */
 export const SENTENCE_LIMIT_TIME = 10000;

@@ -1,7 +1,7 @@
 // @ts-check
 
 import { getWeatherText } from "../../services/weather.js";
-
+import recorder from "../../llm/recorder.js";
 /**
  * 用户命令处理器
  * 前缀 # 触发，如 #gw 杭州
@@ -9,9 +9,16 @@ import { getWeatherText } from "../../services/weather.js";
 
 const USER_CMD_MAP = new Map();
 
-USER_CMD_MAP.set("gw", async (args) => {
+USER_CMD_MAP.set("gw", async (args, ctx) => {
     if (!args[0]) return "请指定城市名，例如 #gw 杭州";
     return await getWeatherText(args[0]);
+});
+
+USER_CMD_MAP.set("clear", async (args, ctx) => {
+    if(!ctx.isAdmin) return "无权限";
+    const cnt = recorder.length;
+    recorder.clear();
+    return `清除了${cnt}条消息。`;
 });
 
 /**
@@ -36,7 +43,7 @@ export default async function userCommands(ctx) {
     if (!ctx.text.startsWith("#")) return false;
 
     const { cmd, args } = parseCommand(ctx.text);
-    if (!cmd || !args.length) {
+    if (!cmd) {
         ctx.adapter.sendGroupMsg(ctx.event.group_id, "指令格式无效");
         return true;
     }
@@ -44,7 +51,7 @@ export default async function userCommands(ctx) {
     const handler = USER_CMD_MAP.get(cmd);
     if (!handler) return false;
 
-    const result = await handler(args);
+    const result = await handler(args, ctx);
     ctx.adapter.sendGroupMsg(ctx.event.group_id, result);
     return true;
 }
