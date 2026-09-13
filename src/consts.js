@@ -6,7 +6,7 @@
  */
 
 /** 对话上下文最大记录条数 */
-export const CHAT_HISTORY_LIMIT = 50;
+export const CHAT_HISTORY_LIMIT = 30;
 
 /** 无主动对话时，多少条消息后触发主动聊天 */
 export const PROACTIVE_CHAT_LIMIT = 15;

@@ -2,6 +2,8 @@
 
 import { getWeatherText } from "../../services/weather.js";
 import recorder from "../../llm/recorder.js";
+import {setting, setting as proactive_chat_setting} from "./proactive-chat.js";
+
 /**
  * 用户命令处理器
  * 前缀 # 触发，如 #gw 杭州
@@ -20,7 +22,17 @@ USER_CMD_MAP.set("clear", async (args, ctx) => {
     recorder.clear();
     return `清除了${cnt}条消息。`;
 });
-
+USER_CMD_MAP.set("pchat", async (args, ctx) => {
+    if(args.length===0) return "缺少参数 true/false";
+    if(args[0]==="true"){
+        setting.enable = true;
+        return "开启了主动回复"
+    }
+    else {
+        setting.enable = false;
+        return "关闭了主动回复"
+    }
+})
 /**
  * 解析用户命令
  * @param {string} rawText

@@ -12,13 +12,16 @@ import {sendAiReply} from "./ai-chat.js";
 
 /** 无 AI 参与的消息计数 */
 let msgWithoutChat = 0;
-
+export let setting = {
+    enable: true,
+}
 
 /**
  * @param {object} ctx
  * @returns {Promise<boolean>}
  */
 export default async function proactiveChat(ctx) {
+    if(!setting.enable) return false;
     const text = ctx.text + (ctx.imageDescription ? `\n${ctx.imageDescription}` : "");
     const pre = `${ctx.senderName}:\n`;
     recorder.add({ role: "user", content: pre + text });
