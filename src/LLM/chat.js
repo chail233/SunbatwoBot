@@ -3,7 +3,9 @@
 import { callLLM } from "./client.js";
 import { chatRecorder } from "./recorder.js";
 import { CHAT_MODEL } from "../consts.js";
+import config from "../config/index.js";
 import logger from "../utils/logger.js";
+import { searchMemory, makeMemoryUserId } from "./long-term-memory.js";
 
 /**
  * 系统提示词：定义 AI 的聊天人格和行为约束
@@ -53,6 +55,22 @@ export default async function chat() {
             : []),
         ...chatRecorder.getAll(),
     ];
+
+    // 搜索长期记忆：用最近的短期对话作为查询上下文
+    const shortTermMessages = chatRecorder.getAll();
+    if (shortTermMessages.length > 0) {
+        const userId = makeMemoryUserId(config.targetGroupId);
+        const recalled = await searchMemory(userId, shortTermMessages.slice(-10));
+        if (recalled.length > 0) {
+            for (const content of recalled) {
+                messages.push({
+                    role: "system",
+                    content: `记忆召回结果：${content}`,
+                });
+            }
+            logger.debug(`已拼接 ${recalled.length} 条长期记忆召回结果`);
+        }
+    }
     const result = await callLLM({
         model: CHAT_MODEL,
         messages,

@@ -39,3 +39,16 @@ export const QW_BASE_URL = "https://m454e6xkq4.re.qweatherapi.com/v7";
 
 /**和风城市id查询url */
 export const QW_GEO_BASE = "https://m454e6xkq4.re.qweatherapi.com/geo/v2";
+
+/** 长期记忆 API 基础地址 */
+export const MEMORY_API_BASE_URL =
+    "https://ws-j92tdnb3txh89s68.cn-beijing.maas.aliyuncs.com/api/v2/apps/memory";
+
+/** 长期记忆搜索：最大召回数量 */
+export const MEMORY_SEARCH_TOP_K = 5;
+
+/** 长期记忆搜索：最小相似度阈值 */
+export const MEMORY_MIN_SCORE = 0.3;
+
+/** 长期记忆：记忆实体 ID 前缀（后接群号） */
+export const MEMORY_USER_ID_PREFIX = "SunBot";

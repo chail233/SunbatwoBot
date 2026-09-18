@@ -2,6 +2,8 @@
 
 import {CHAT_HISTORY_LIMIT, CHAT_MODEL} from "../consts.js";
 import { callLLM } from "./client.js";
+import { addMemory, makeMemoryUserId } from "./long-term-memory.js";
+import config from "../config/index.js";
 /**
  * 对话上下文管理器（三层记忆）
  *
@@ -54,11 +56,21 @@ export class ChatRecorder {
 
     /**
      * 执行缓存概括（如果需要）
-     * 异步调用 LLM 概括缓存中的对话，更新中期概括文本
+     * 异步调用 LLM 概括缓存中的对话，更新中期概括文本。
+     * 在覆盖旧概括前，会先将旧的概括内容存入长期记忆。
      */
     async summarizeCache() {
         if (!this._needsSummarization || this._cache.length === 0) return;
 
+        // 1. 如果存在旧的概括，先存入长期记忆（放在 messages 中，标注为对话摘要）
+        if (this._midSummary) {
+            const userId = makeMemoryUserId(config.targetGroupId);
+            await addMemory(userId, [
+                { role: "user", content: `对话摘要：${this._midSummary}` },
+            ]);
+        }
+
+        // 2. 生成新的概括
         const result = await callLLM({
             model: CHAT_MODEL,
             messages: [
