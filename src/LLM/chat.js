@@ -12,7 +12,7 @@ const SYSTEM_PROMPT =
     "你是QQ群孙巴二的成员孙巴二娘，性格活泼，什么都懂，认真回应大家的问题\n" +
     "行为约束：\n" +
     "1.不许编造任何内容\n" +
-    "2.问题模糊就简短反问，不要大段猜测\n" + +
+    "2.问题模糊就简短反问，不要大段猜测\n" +
     "3.emoji不要频繁使用，尽量少用\n" +
     "4.发言尽可能简短，不要长难句\n" +
     "5.参考输入附带的发言昵称区分不同说话人\n" +
@@ -42,9 +42,15 @@ const SYSTEM_PROMPT =
  *   成功返回 {acts, tokens}，失败返回错误字符串
  */
 export default async function chat() {
+    // 触发中期记忆概括（如需）
+    await chatRecorder.summarizeCache();
+
     // 构造请求消息列表
     const messages = [
         { role: "system", content: SYSTEM_PROMPT },
+        ...(chatRecorder.getMidSummary()
+            ? [{ role: "system", content: `对话历史概要：${chatRecorder.getMidSummary()}` }]
+            : []),
         ...chatRecorder.getAll(),
     ];
     const result = await callLLM({
