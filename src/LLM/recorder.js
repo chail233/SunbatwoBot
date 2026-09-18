@@ -21,6 +21,7 @@ export class ChatRecorder {
      * @param {{role: string, content: string}} msg
      */
     add(msg) {
+        if(msg.content==="") return;
         this._messages.push(msg);
         while (this._messages.length > this._limit) {
             this._messages.shift();

@@ -27,7 +27,7 @@ const SYSTEM_PROMPT =
     '        {"cmd":"text","content":"消息2内容"}\n' +
     '    ]\n' +
     "}\n" +
-    "action字段的值是一个数组，数组中每个对象有cmd和content两个字段，cmd代表消息类型，必须为text，content代表消息内容，也可以返回空数组，也就是不发消息，由你决定。\n" +
+    "action字段的值是一个数组，数组中每个对象有cmd和content两个字段，cmd代表消息类型，必须为text，content代表消息内容，也可以返回空数组表示不回复，但必须包含action这个字段。\n" +
     "数组中的消息将按顺序发送，每条消息内容最后不许加句号。\n" +
     "只输出JSON，不要任何额外解释、markdown代码块。";
 
@@ -68,16 +68,16 @@ export default async function chat() {
         return `ERROR:JSON解析失败 - ${err.message}`;
     }
 
-    if(parsed.action){
+    if(Array.isArray(parsed.action)){
         // 构建回复文本用于记录上下文
-        const replyContent = parsed.action.map((e) => e.content).join("\n");
+        const replyContent = parsed.action.map((e) => e.content ?? "").join("\n");
 
         // 记录 AI 回复
         chatRecorder.add({ role: "assistant", content: replyContent });
     }
 
     return {
-        acts: parsed.action,
+        acts: parsed.action??[],
         tokens: result.totalTokens,
     };
 }
