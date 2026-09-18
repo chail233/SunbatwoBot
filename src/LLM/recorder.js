@@ -2,8 +2,6 @@
 
 import {CHAT_HISTORY_LIMIT, CHAT_MODEL} from "../consts.js";
 import { callLLM } from "./client.js";
-import config from "../config/index.js";
-
 /**
  * 对话上下文管理器（三层记忆）
  *
