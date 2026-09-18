@@ -3,8 +3,12 @@
 这是一个基于 NapCat + OneBot v11 协议的 QQ 机器人服务端。包含了一些已经开发好的功能，
 如关键词识别、执行指令、ai对话等。
 
-该项目的AI对话还在继续开发中，目前已经支持识别图片内容，区别不同的发言人，主动发言，发送多条消息，
-联网搜索...
+该项目的AI对话还在继续开发中，目前已经支持：
+- 识别图片内容
+- 区别不同的发言人
+- 主动发言、发送多条消息
+- 联网搜索
+- **长期记忆**（基于阿里云百炼记忆库，自动存储和召回对话历史中的关键信息）
 
 你可以快速地配置并使用该项目，或者扩展开发自己想要的功能。
 
@@ -88,6 +92,19 @@ export const QW_BASE_URL = "https://m454e6xkq4.re.qweatherapi.com/v7";
 
 /**和风城市id查询url */
 export const QW_GEO_BASE = "https://m454e6xkq4.re.qweatherapi.com/geo/v2";
+
+/** 长期记忆 API 基础地址（阿里云百炼记忆库） */
+export const MEMORY_API_BASE_URL =
+    "https://dashscope.aliyuncs.com/api/v2/apps/memory";
+
+/** 长期记忆搜索：最大召回数量 */
+export const MEMORY_SEARCH_TOP_K = 5;
+
+/** 长期记忆搜索：最小相似度阈值 */
+export const MEMORY_MIN_SCORE = 0.3;
+
+/** 长期记忆：记忆实体 ID 前缀（后接群号） */
+export const MEMORY_USER_ID_PREFIX = "SunBot";
 ```
 
 ### 启动
@@ -137,9 +154,10 @@ src/
 │
 ├── llm/                        # AI 语言模型层
 │   ├── client.js               # 统一 API 客户端（axios 封装）
-│   ├── chat.js                 # 对话 API（含系统提示词）
+│   ├── chat.js                 # 对话 API（含系统提示词 + 长期记忆召回）
 │   ├── image.js                # 识图 API
-│   └── recorder.js             # 对话上下文管理器
+│   ├── long-term-memory.js     # 阿里云百炼长期记忆 API 封装
+│   └── recorder.js             # 对话上下文管理器（含长期记忆同步）
 │
 ├── services/                   # 外部服务
 │   ├── napcat.js               # NapCat HTTP API 客户端
@@ -215,6 +233,42 @@ pipeline/index.js 管道编排器
     handled        // 是否已被处理
 }
 ```
+
+### 四层记忆系统
+
+AI 对话使用逐层压缩的记忆架构，在上下文窗口限制与长期信息保留之间取得平衡(30条为示例)：
+
+```
+短期记忆（_messages）
+  │ 最近 30 条对话，超出则挤入缓存
+  ▼
+中期缓存（_cache）
+  │ 达到 30 条时触发 LLM 概括
+  ▼
+中期概括（_midSummary）
+  │ 被新概括覆盖前，自动存入长期记忆
+  ▼
+长期记忆（阿里云百炼记忆库）
+  │ AI 回复前，以最近对话为查询进行语义召回
+  ▼
+拼入请求消息 → 供 LLM 参考
+```
+
+**各层级说明：**
+
+| 层级 | 存储位置 | 容量/周期 | 触发条件 |
+|------|---------|-----------|---------|
+| 短期记忆 | `ChatRecorder._messages`（内存） | 30 条 | 每次对话实时更新 |
+| 中期缓存 | `ChatRecorder._cache`（内存） | 满 30 条触发概括 | 短期溢出时 |
+| 中期概括 | `ChatRecorder._midSummary`（内存） | 每次概括覆盖 | 缓存满时 LLM 生成 |
+| 长期记忆 | 阿里云百炼记忆库（云端） | 无上限 | 旧概括被替换时存入；AI 回复前搜索 |
+
+**长期记忆流程：**
+
+1. **添加**：当新的中期概括生成时，旧的概括自动以 `对话摘要：...` 格式通过 `AddMemory` API 存入记忆库，用 `SunBot{群号}` 作为记忆实体 ID
+2. **召回**：每次 AI 回复前，取最近 3 条短期消息通过 `SearchMemory` API 进行语义检索，召回结果以 `system` 角色（`记忆召回结果：...`）拼入请求消息末尾
+
+所有长期记忆操作失败均静默处理，不影响原有对话功能。
 
 ### 如何添加新功能
 
@@ -303,19 +357,22 @@ index.js
        │    ├─ image-recognizer.js ── services/napcat.js
        │    │                       ── utils/image-type.js
        │    │                       ── llm/image.js
-       │    └─ mini-program.js ── llm/recorder.js
+       │    └─ mini-program.js ── llm/recorder.js ── llm/long-term-memory.js ── config/
        └─ pipeline/handlers/
             ├─ admin-commands.js ── tools/runcode.js
             ├─ keyword-commands.js ── services/acg.js
             │                      ── services/hitokoto.js
             │                      ── data/sunbatwo-girls.js
-            │                      ── llm/recorder.js
+            │                      ── llm/recorder.js ── llm/long-term-memory.js
             ├─ user-commands.js ── services/weather.js
-            ├─ ai-chat.js ── llm/chat.js ── llm/client.js
-            │              ── llm/recorder.js
+            ├─ ai-chat.js ── llm/chat.js ──┬── llm/client.js
+            │              │               ├── llm/recorder.js
+            │              │               └── llm/long-term-memory.js ── config/
+            │              └── llm/recorder.js
             ├─ repeater.js ── tools/repeater.js ── utils/queue.js
-            └─ proactive-chat.js ── llm/chat.js
-                                 ── llm/recorder.js
+            └─ proactive-chat.js ── llm/chat.js ──┬── llm/client.js
+                                                  ├── llm/recorder.js
+                                                  └── llm/long-term-memory.js
 ```
 
 ---
