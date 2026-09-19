@@ -65,7 +65,7 @@ export default async function runPipeline(event, adapter) {
     if (ctx.handled) return;
 
     // 6. 运行处理器，第一个返回 true 的停止后续处理器
-    if(ctx.text==="") return;
+    if(ctx.text.trim()==="") return;
     for (const handler of handlers) {
         try {
             const handled = await handler(ctx);
