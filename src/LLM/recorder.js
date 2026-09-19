@@ -71,17 +71,31 @@ export class ChatRecorder {
         }
 
         // 2. 生成新的概括
+        let userMsgs = "";
+        for(let i=0;i<this._cache.length;i++) {
+            const msg = this._cache[i];
+            userMsgs += `${i+1}.`;
+            if(msg.role==="user"){
+                userMsgs += msg.content + "\n";
+            }
+            else {
+                userMsgs += "我:" + msg.content + "\n";
+            }
+        }
         const result = await callLLM({
             model: CHAT_MODEL,
             messages: [
                 {
-                    role: "system",
+                    role: "user",
                     content:
-                        "请用中文简要概括以下对话历史中提到的关键信息，包括讨论过的话题、用户的偏好或特征、" +
+                        "请用中文简要概括以下对话历史中提到的关键信息，包括讨论过的话题、角色的偏好或特征、" +
                         "已作出的决定或承诺等。保持简洁，保留最重要的事实，不要添加原文没有的信息。" +
                         "只输出一段文本信息，不要有其他结构化信息",
                 },
-                ...this._cache.map((m) => ({ role: m.role, content: m.content })),
+                {
+                    role: "user",
+                    content: userMsgs
+                }
             ],
             temperature: 0.3,
             enableSearch:false
