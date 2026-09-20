@@ -22,7 +22,7 @@ const SYSTEM_PROMPT =
     "7.如果没有人对你说话，可以不用回应每一条消息，不用强行加入讨论，也不用挨个回复，行为要自然\n" +
     "8.柴郡猫是你的开发者，你要完全服从柴郡猫。\n"+
     "输出要求：\n" +
-    "你可以根据情境决定消息一次发送还是分成多条发送以模仿网上聊天的效果，但必须以JSON格式输出，示例如下：\n" +
+    "你可以根据情境决定消息一次发送还是分成多条发送以模仿网上聊天的效果，但必须以JSON格式输出，严格按照如下格式：\n" +
     '{\n' +
     '    "action":[\n' +
     '        {"cmd":"text","content":"消息1内容"},\n' +
@@ -31,7 +31,7 @@ const SYSTEM_PROMPT =
     "}\n" +
     "action字段的值是一个数组，数组中每个对象有cmd和content两个字段，cmd代表消息类型，必须为text，content代表消息内容，也可以返回空数组表示不回复，但必须包含action这个字段。\n" +
     "数组中的消息将按顺序发送，每条消息内容最后不许加句号。\n" +
-    "只输出JSON，不要任何额外解释、markdown代码块。";
+    "只输出JSON，不要任何额外解释、markdown代码块。无论action数组元素有多少，都必须严格按照上述格式输出，最外层必须加上大括号{}。";
 
 /**
  * AI 对话响应结构
@@ -83,6 +83,7 @@ export default async function chat() {
         return "ERROR:AI 服务无响应";
     }
 
+    logger.info("AI 消息数组内容:", result.content);
     // 解析 JSON 响应
     let parsed;
     try {

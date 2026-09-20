@@ -16,8 +16,7 @@ export const LLM_API_URL =
     "https://ws-j92tdnb3txh89s68.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions";
 
 /** 聊天模型名称 */
-export let CHAT_MODEL = "deepseek-v4-flash";
-globalThis.model = CHAT_MODEL;
+export let CHAT_MODEL = "deepseek-v4-flash"
 
 /** 识图模型名称 */
 export const VISION_MODEL = "qwen3.7-flash";
