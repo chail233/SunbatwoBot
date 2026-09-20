@@ -145,7 +145,6 @@ src/
 │   │   ├── at-detector.js      # 检测是否 @机器人
 │   │   └── mini-program.js     # 处理小程序/链接分享
 │   └── handlers/               # 处理器：按顺序执行，首个命中即停止
-│       ├── admin-commands.js   # 管理员命令（/ 前缀）
 │       ├── keyword-commands.js # 关键词命令（"来句台词"等）
 │       ├── user-commands.js    # 用户命令（# 前缀）
 │       ├── ai-chat.js          # AI 对话（@机器人时触发）
@@ -171,7 +170,6 @@ src/
 │
 ├── tools/                      # 工具函数
 │   ├── repeater.js             # 复读检测算法
-│   └── runcode.js              # 动态代码执行（仅管理员可用）
 │
 └── utils/                      # 通用工具
     ├── logger.js               # 统一日志（带时间戳）
@@ -359,7 +357,6 @@ index.js
        │    │                       ── llm/image.js
        │    └─ mini-program.js ── llm/recorder.js ── llm/long-term-memory.js ── config/
        └─ pipeline/handlers/
-            ├─ admin-commands.js ── tools/runcode.js
             ├─ keyword-commands.js ── services/acg.js
             │                      ── services/hitokoto.js
             │                      ── data/sunbatwo-girls.js

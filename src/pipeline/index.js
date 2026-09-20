@@ -9,7 +9,6 @@ import atDetector from "./middleware/at-detector.js";
 import miniProgram from "./middleware/mini-program.js";
 
 // 处理器（按顺序执行，第一个返回 true 的停止后续处理器）
-import adminCommands from "./handlers/admin-commands.js";
 import keywordCommands from "./handlers/keyword-commands.js";
 import userCommands from "./handlers/user-commands.js";
 import aiChat from "./handlers/ai-chat.js";
@@ -25,7 +24,6 @@ const middlewares = [
 
 /** 处理器列表 */
 const handlers = [
-    adminCommands,
     keywordCommands,
     userCommands,
     aiChat,
