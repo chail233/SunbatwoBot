@@ -1,6 +1,7 @@
 // @ts-check
 
 import { getWeatherText } from "../../services/weather.js";
+import { getBailianModelsText } from "../../services/getModels.js";
 import recorder from "../../llm/recorder.js";
 import {setting} from "./proactive-chat.js";
 import {CHAT_MODEL} from "../../consts.js";
@@ -32,6 +33,7 @@ USER_CMD_MAP.set("help", async (args, ctx) => {
         "  #pchat      — 开启/关闭主动回复",
         "  #msgs       — 列出短期记录",
         "  #sm         — 显示中期记忆概括",
+        "  #mls        — 查询模型",
         "管理员指令：",
         "  #clear      — 清除短期记忆" ,
         "  #ms <模型名称>  — 设置文本模型",
@@ -64,6 +66,10 @@ USER_CMD_MAP.set("pchat", async (args, ctx) => {
         return "关闭了主动回复"
     }
 })
+
+USER_CMD_MAP.set("mls", async (args, ctx) => {
+    return await getBailianModelsText();
+});
 
 USER_CMD_MAP.set("ms", async (args, ctx) => {
     if (!ctx.isAdmin) return "无权限";

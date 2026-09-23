@@ -41,7 +41,7 @@ export async function callLLM({ model, messages, temperature, enableSearch, resp
             ...(responseFormat && { response_format: responseFormat }),
         };
 
-        const resp = await http.post("", data);
+        const resp = await http.post("/compatible-mode/v1/chat/completions", data);
         const body = resp.data;
 
         if (!body?.choices?.[0]?.message?.content) {
@@ -60,3 +60,4 @@ export async function callLLM({ model, messages, temperature, enableSearch, resp
         return null;
     }
 }
+

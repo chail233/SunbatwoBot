@@ -67,7 +67,7 @@ export const PROACTIVE_CHAT_LIMIT = 10;
 
 /** LLM API 基础地址 */
 export const LLM_API_URL =
-    "https://ws-j92tdnb3txh89s68.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions";
+    "https://example.com";
 
 /** 聊天模型名称 */
 export const CHAT_MODEL = "deepseek-v4-flash";
