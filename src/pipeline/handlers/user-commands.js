@@ -1,7 +1,7 @@
 // @ts-check
 
 import { getWeatherText } from "../../services/weather.js";
-import { getBailianModelsText } from "../../services/getModels.js";
+import { getModelsText } from "../../services/getModels.js";
 import recorder from "../../llm/recorder.js";
 import {setting} from "./proactive-chat.js";
 import {CHAT_MODEL} from "../../consts.js";
@@ -68,7 +68,7 @@ USER_CMD_MAP.set("pchat", async (args, ctx) => {
 })
 
 USER_CMD_MAP.set("mls", async (args, ctx) => {
-    return await getBailianModelsText();
+    return await getModelsText();
 });
 
 USER_CMD_MAP.set("ms", async (args, ctx) => {

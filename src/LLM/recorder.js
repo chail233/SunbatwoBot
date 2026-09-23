@@ -30,7 +30,8 @@ export class ChatRecorder {
      * @param {{role: string, content: string}} msg
      */
     add(msg) {
-        if (msg.content.trim() === "") return;
+        const realText = msg.content.replace(/[\s\u3000\u200b\u200c\u200d]/g, '');
+        if (realText === "") return;
         this._messages.push(msg);
         while (this._messages.length > this._limit) {
             const evicted = this._messages.shift();

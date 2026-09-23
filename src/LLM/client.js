@@ -7,7 +7,6 @@ import { LLM_API_URL, LLM_TIMEOUT } from "../consts.js";
 
 /**
  * 统一的 LLM API 客户端
- * 封装阿里云百炼兼容接口的 HTTP 调用
  */
 
 /** axios 实例 */
