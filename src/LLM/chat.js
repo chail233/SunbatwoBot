@@ -95,7 +95,7 @@ export default async function chat() {
 
     if(Array.isArray(parsed.action)){
         // 记录 AI 回复
-        chatRecorder.add({ role: "assistant", content: parsed});
+        chatRecorder.add({ role: "assistant", content: JSON.stringify(parsed) });
     }
 
     return {

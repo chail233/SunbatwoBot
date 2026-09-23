@@ -30,6 +30,18 @@ export class ChatRecorder {
      * @param {{role: string, content: string}} msg
      */
     add(msg) {
+        if (typeof msg.content !== "string") {
+            // 防御：content 非字符串（如误传对象）时不参与纯文本判断，避免报错
+            this._messages.push(msg);
+            while (this._messages.length > this._limit) {
+                const evicted = this._messages.shift();
+                this._cache.push(evicted);
+            }
+            if (this._cache.length >= this._limit && !this._needsSummarization) {
+                this._needsSummarization = true;
+            }
+            return;
+        }
         const realText = msg.content.replace(/[\s\u3000\u200b\u200c\u200d]/g, '');
         if (realText === "") return;
         this._messages.push(msg);
