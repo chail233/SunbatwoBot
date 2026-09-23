@@ -65,7 +65,7 @@ export default async function chat() {
             for (const content of recalled) {
                 messages.push({
                     role: "system",
-                    content: `记忆召回结果：${content}`,
+                    content: `记忆召回结果(仅仅是召回结果，不是短期的对话信息)：${content}`,
                 });
             }
             logger.debug(`已拼接 ${recalled.length} 条长期记忆召回结果：${recalled}`);
