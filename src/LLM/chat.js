@@ -68,7 +68,7 @@ export default async function chat() {
                     content: `记忆召回结果：${content}`,
                 });
             }
-            logger.debug(`已拼接 ${recalled.length} 条长期记忆召回结果`);
+            logger.debug(`已拼接 ${recalled.length} 条长期记忆召回结果：${recalled}`);
         }
     }
     const result = await callLLM({
