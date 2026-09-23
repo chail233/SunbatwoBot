@@ -17,11 +17,8 @@ export class ChatRecorder {
      * @param {number} [limit] 最大消息条数
      */
     constructor(limit = CHAT_HISTORY_LIMIT) {
-        /** @type {Array<{role: string, content: string}>} */
         this._messages = [];
-        /** @type {Array<{role: string, content: string}>} */
         this._cache = [];
-        /** @type {string} 中期记忆概括文本 */
         this._midSummary = "";
         this._limit = limit;
         this._needsSummarization = false;
@@ -33,7 +30,7 @@ export class ChatRecorder {
      * @param {{role: string, content: string}} msg
      */
     add(msg) {
-        if (msg.content === "") return;
+        if (msg.content.trim() === "") return;
         this._messages.push(msg);
         while (this._messages.length > this._limit) {
             const evicted = this._messages.shift();

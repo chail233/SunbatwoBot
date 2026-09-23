@@ -94,11 +94,8 @@ export default async function chat() {
     }
 
     if(Array.isArray(parsed.action)){
-        // 构建回复文本用于记录上下文
-        const replyContent = parsed.action.map((e) => e.content ?? "").join("\n");
-
         // 记录 AI 回复
-        chatRecorder.add({ role: "assistant", content: replyContent });
+        chatRecorder.add({ role: "assistant", content: parsed});
     }
 
     return {
