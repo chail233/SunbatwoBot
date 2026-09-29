@@ -70,8 +70,8 @@ export async function addMemory(userId, messages) {
  * @param {string} userId 记忆实体 ID
  * @param {Array<{role: string, content: string}>} messages 对话消息（用作查询上下文）
  * @param {object} [options]
- * @param {number} [options.topK] 最大召回数量（默认 consts 中定义）
- * @param {number} [options.minScore] 最小相似度阈值（默认 consts 中定义）
+ * @param {number} [options.topK] 最大召回数量（默认 config 中定义）
+ * @param {number} [options.minScore] 最小相似度阈值（默认 config 中定义）
  * @param {string} [options.planVersion] Pro 或 Lite（默认 Lite）
  * @returns {Promise<Array<string>>} 召回的记忆内容数组，为空表示无相关记忆
  */

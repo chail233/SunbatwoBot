@@ -2,8 +2,7 @@
 
 import { callLLM } from "./client.js";
 import { chatRecorder } from "./recorder.js";
-import { CHAT_MODEL } from "../consts.js";
-import config from "../config/index.js";
+import config from "../config.js";
 import logger from "../utils/logger.js";
 import { searchMemory, makeMemoryUserId } from "./long-term-memory.js";
 
@@ -69,7 +68,7 @@ export default async function chat() {
         }
     }
     const result = await callLLM({
-        model: CHAT_MODEL,
+        model: config.CHAT_MODEL,
         messages,
         temperature: 0.2,
         enableSearch: true,

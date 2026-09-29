@@ -8,7 +8,7 @@
  */
 
 import { existsSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, join } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -106,7 +106,7 @@ const baseConfig = {
 if (baseConfig.DevMode) {
     const devConfigPath = join(__dirname, "configDev.js");
     if (existsSync(devConfigPath)) {
-        const devConfig = (await import(devConfigPath)).default;
+        const devConfig = (await import(pathToFileURL(devConfigPath).href)).default;
         Object.assign(baseConfig, devConfig);
     } else {
         console.error("[config] DevMode 为 true，但找不到 configDev.js");
