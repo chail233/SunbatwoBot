@@ -29,82 +29,88 @@ npm install
 
 ### 配置
 
-创建 `.env` 文件并填写配置：
+所有配置集中在 `src/config.js` 中，包括基础配置、全局常量和成员映射。
 
-```env
-# WebSocket 服务端口（NapCat 反向连接端口）
-WS_PORT=8080
+**开发环境：** 将 `config.js` 中的 `DevMode` 设为 `true`，然后在 `src/configDev.js` 中填写真实配置（如 Token、API Key 等）。
 
-# OneBot 鉴权 Token（需与 NapCat 配置一致）
-ONEBOT_TOKEN=your_token_here
+**生产环境：** 将 `DevMode` 设为 `false`，直接在 `config.js` 中填写真实配置值。
 
-# 机器人 QQ 号
-BOT_SELF_ID=1234567890
+`configDev.js` 示例：
+```js
+const configDev = {
+    /** OneBot 鉴权 Token */
+    token: "your_token_here",
 
-# 主人 QQ 号（管理员命令使用）
-OWNER=1234567890
+    /** 目标群 ID */
+    targetGroupId: "123456789",
 
-# 目标群 ID（机器人只处理该群消息）
-TARGET_GROUP_ID=123456789
+    /** 机器人自身 QQ 号 */
+    selfId: "1234567890",
 
-# NapCat HTTP API 地址（用于 get_image 等 HTTP 操作）
-HTTP_SERVER=127.0.0.1:3000
+    /** 主人 QQ 号 */
+    owner: "1234567890",
 
-# 阿里云百炼 API Key（用于 AI 对话和识图）
-AI_APIKEY=sk-xxx
+    /** 阿里云 AI API Key */
+    aiAPIKEY: "sk-xxx",
 
-# 和风天气 API Key（用于天气查询）
-QWEATHER_KEY=your_key_here
+    /** 和风天气 Key */
+    qweatherKEY: "your_key_here",
+
+    /** QQ 号 → 群昵称 映射表 */
+    members: new Map([
+        ["1234567890", "昵称"],
+    ]),
+};
+
+export default configDev;
 ```
 
-在`consts.js`中配置所需的url，以及更改运行时常量。如果不需要某些功能，可以只填写占位符。
-``` js
+`config.js` 中的常量配置（按需修改）：
+```js
 /** 对话上下文最大记录条数 */
-export const CHAT_HISTORY_LIMIT = 50;
+CHAT_HISTORY_LIMIT: 30,
 
 /** 无主动对话时，多少条消息后触发主动聊天 */
-export const PROACTIVE_CHAT_LIMIT = 10;
+PROACTIVE_CHAT_LIMIT: 15,
 
 /** LLM API 基础地址 */
-export const LLM_API_URL =
-    "https://example.com";
+LLM_API_URL: "https://workspace.aliyuncs.com",
 
 /** 聊天模型名称 */
-export const CHAT_MODEL = "deepseek-v4-flash";
+CHAT_MODEL: "deepseek-v4-flash",
 
 /** 识图模型名称 */
-export const VISION_MODEL = "qwen3.7-plus";
+VISION_MODEL: "qwen3.7-flash",
 
-/** 聊天接口超时（毫秒） */
-export const LLM_TIMEOUT = 30000;
+/** 模型接口超时（毫秒） */
+LLM_TIMEOUT: 60000,
 
 /** 一言 API 限流：时间窗口 */
-export const SENTENCE_LIMIT_TIME = 10000;
+SENTENCE_LIMIT_TIME: 10000,
 
 /** 一言 API 限流：窗口内最大次数 */
-export const SENTENCE_LIMIT_COUNT = 3;
+SENTENCE_LIMIT_COUNT: 3,
 
 /** 复读检测队列长度 */
-export const REPEATER_QUEUE_SIZE = 10;
+REPEATER_QUEUE_SIZE: 10,
 
 /** 和风天气查询url */
-export const QW_BASE_URL = "https://m454e6xkq4.re.qweatherapi.com/v7";
+QW_BASE_URL: "https://m454e6xkq4.re.qweatherapi.com/v7",
 
-/**和风城市id查询url */
-export const QW_GEO_BASE = "https://m454e6xkq4.re.qweatherapi.com/geo/v2";
+/** 和风城市id查询url */
+QW_GEO_BASE: "https://m454e6xkq4.re.qweatherapi.com/geo/v2",
 
-/** 长期记忆 API 基础地址（阿里云百炼记忆库） */
-export const MEMORY_API_BASE_URL =
-    "https://dashscope.aliyuncs.com/api/v2/apps/memory";
+/** 长期记忆 API 基础地址 */
+MEMORY_API_BASE_URL: "https://workspace.aliyuncs.com/api/v2/apps/memory",
 
 /** 长期记忆搜索：最大召回数量 */
-export const MEMORY_SEARCH_TOP_K = 5;
+MEMORY_SEARCH_TOP_K: 5,
 
 /** 长期记忆搜索：最小相似度阈值 */
-export const MEMORY_MIN_SCORE = 0.3;
+MEMORY_MIN_SCORE: 0.3,
 
 /** 长期记忆：记忆实体 ID 前缀（后接群号） */
-export const MEMORY_USER_ID_PREFIX = "SunBot";
+MEMORY_USER_ID_PREFIX: "SunBot",
 ```
 
 ### 启动
@@ -127,10 +133,8 @@ NapCat 配置反向 WebSocket 连接地址：`ws://127.0.0.1:8080/onebot/v11/ws`
 src/
 ├── index.js                    # 入口文件：启动服务
 │
-├── config/
-│   └── index.js                # 配置加载：读取 .env，统一校验
-│
-├── consts.js                   # 全局常量：API 地址、模型名、限制参数
+├── config.js                   # 统一配置：基础配置、常量、成员映射
+├── configDev.js                # 开发环境配置（gitignore，覆盖 config.js 中的字段）
 │
 ├── bot/                        # 机器人通信层
 │   ├── server.js               # WebSocket 服务启动
@@ -165,7 +169,6 @@ src/
 │   └── weather.js              # 和风天气 API
 │
 ├── data/                       # 静态数据
-│   ├── members.js              # QQ号 → 昵称映射（注意，这个需要自行配置）
 │   └── sunbatwo-girls.js       # 孙巴二娘图片 URL 列表
 │
 ├── tools/                      # 工具函数
@@ -350,12 +353,12 @@ export async function yourFunction(params) {
 index.js
   ├─ bot/server.js ── bot/adapter.js ── utils/logger.js
   └─ pipeline/index.js
-       ├─ pipeline/context.js ── config/ ── data/members.js
+       ├─ pipeline/context.js ── config.js
        ├─ pipeline/middleware/
        │    ├─ image-recognizer.js ── services/napcat.js
        │    │                       ── utils/image-type.js
        │    │                       ── llm/image.js
-       │    └─ mini-program.js ── llm/recorder.js ── llm/long-term-memory.js ── config/
+       │    └─ mini-program.js ── llm/recorder.js ── llm/long-term-memory.js ── config.js
        └─ pipeline/handlers/
             ├─ keyword-commands.js ── services/acg.js
             │                      ── services/hitokoto.js
@@ -364,7 +367,7 @@ index.js
             ├─ user-commands.js ── services/weather.js
             ├─ ai-chat.js ── llm/chat.js ──┬── llm/client.js
             │              │               ├── llm/recorder.js
-            │              │               └── llm/long-term-memory.js ── config/
+            │              │               └── llm/long-term-memory.js ── config.js
             │              └── llm/recorder.js
             ├─ repeater.js ── tools/repeater.js ── utils/queue.js
             └─ proactive-chat.js ── llm/chat.js ──┬── llm/client.js
@@ -379,5 +382,4 @@ index.js
 1. **添加新命令**：优先考虑放在 `pipeline/handlers/` 下的对应处理器中，或创建新的处理器文件并注册到 `pipeline/index.js`
 2. **调用外部 API**：在 `services/` 下创建新文件，不要在 handler 中直接写 axios/fetch
 3. **日志**：使用 `logger.info/warn/error` 替代 `console.log`
-4. **配置**：新增配置项需在 `.env` 和 `config/index.js` 中同步添加
-5. **常量**：魔法数字/字符串放在 `consts.js` 中统一管理
+4. **配置**：新增配置项在 `config.js` 中添加，敏感信息放在 `configDev.js`

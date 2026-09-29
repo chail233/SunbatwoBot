@@ -1,6 +1,6 @@
 // @ts-check
 
-import config from "../../config/index.js";
+import config from "../../config.js";
 
 /**
  * @bot 检测中间件

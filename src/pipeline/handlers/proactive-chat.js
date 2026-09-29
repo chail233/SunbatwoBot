@@ -3,7 +3,7 @@
 import chatAPI from "../../llm/chat.js";
 import recorder from "../../llm/recorder.js";
 import logger from "../../utils/logger.js";
-import { PROACTIVE_CHAT_LIMIT } from "../../consts.js";
+import config from "../../config.js";
 import {sendAiReply} from "./ai-chat.js";
 /**
  * 主动聊天处理器
@@ -26,7 +26,7 @@ export default async function proactiveChat(ctx) {
     const pre = `${ctx.senderName}:\n`;
     recorder.add({ role: "user", content: pre + text });
     // 检查是否达到主动触发阈值
-    if (msgWithoutChat >= PROACTIVE_CHAT_LIMIT) {
+    if (msgWithoutChat >= config.PROACTIVE_CHAT_LIMIT) {
         logger.info("达到主动聊天阈值，触发 AI 对话");
         msgWithoutChat = 0;
         const res = await chatAPI();

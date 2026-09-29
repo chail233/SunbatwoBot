@@ -1,5 +1,5 @@
 import { WebSocketServer } from "ws";
-import config from "../config/index.js";
+import config from "../config.js";
 import logger from "../utils/logger.js";
 import { OneBotAdapter } from "./adapter.js";
 

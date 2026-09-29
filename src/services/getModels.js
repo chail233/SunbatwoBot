@@ -1,9 +1,8 @@
 // @ts-check
 
 import axios from "axios";
-import config from "../config/index.js";
+import config from "../config.js";
 import logger from "../utils/logger.js";
-import { LLM_API_URL, LLM_TIMEOUT } from "../consts.js";
 
 /**
  * 模型列表查询
@@ -13,8 +12,8 @@ import { LLM_API_URL, LLM_TIMEOUT } from "../consts.js";
  */
 
 const api = axios.create({
-    baseURL: LLM_API_URL,
-    timeout: LLM_TIMEOUT,
+    baseURL: config.LLM_API_URL,
+    timeout: config.LLM_TIMEOUT,
     headers: {
         Authorization: `Bearer ${config.aiAPIKEY}`,
         "Content-Type": "application/json",

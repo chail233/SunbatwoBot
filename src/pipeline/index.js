@@ -2,13 +2,9 @@
 
 import logger from "../utils/logger.js";
 import { buildContext } from "./context.js";
-
-// 中间件（按顺序执行，全部执行）
 import imageRecognizer from "./middleware/image-recognizer.js";
 import atDetector from "./middleware/at-detector.js";
 import miniProgram from "./middleware/mini-program.js";
-
-// 处理器（按顺序执行，第一个返回 true 的停止后续处理器）
 import keywordCommands from "./handlers/keyword-commands.js";
 import userCommands from "./handlers/user-commands.js";
 import aiChat from "./handlers/ai-chat.js";

@@ -7,9 +7,6 @@ import config from "../config/index.js";
 import logger from "../utils/logger.js";
 import { searchMemory, makeMemoryUserId } from "./long-term-memory.js";
 
-/**
- * 系统提示词：定义 AI 的聊天人格和行为约束
- */
 const SYSTEM_PROMPT =
     "你是QQ群孙巴二的成员孙巴二娘，性格活泼，什么都懂，认真回应大家的问题\n" +
     "行为约束：\n" +

@@ -1,15 +1,8 @@
 // @ts-check
 
 import axios from "axios";
-import config from "../config/index.js";
+import config from "../config.js";
 import logger from "../utils/logger.js";
-import {
-    MEMORY_API_BASE_URL,
-    MEMORY_SEARCH_TOP_K,
-    MEMORY_MIN_SCORE,
-    MEMORY_USER_ID_PREFIX,
-    LLM_TIMEOUT,
-} from "../consts.js";
 
 /**
  * 长期记忆 API 封装（阿里云百炼记忆库）
@@ -21,8 +14,8 @@ import {
 
 /** axios 实例（独立的 HTTP 客户端，指向记忆库 API） */
 const http = axios.create({
-    baseURL: MEMORY_API_BASE_URL,
-    timeout: LLM_TIMEOUT,
+    baseURL: config.MEMORY_API_BASE_URL,
+    timeout: config.LLM_TIMEOUT,
     headers: {
         Authorization: `Bearer ${config.aiAPIKEY}`,
         "Content-Type": "application/json",
@@ -35,7 +28,7 @@ const http = axios.create({
  * @returns {string} 例如 "SunBot199243777"
  */
 export function makeMemoryUserId(groupId) {
-    return `${MEMORY_USER_ID_PREFIX}${groupId}`;
+    return `${config.MEMORY_USER_ID_PREFIX}${groupId}`;
 }
 
 /**
@@ -84,8 +77,8 @@ export async function addMemory(userId, messages) {
  */
 export async function searchMemory(userId, messages, options = {}) {
     const {
-        topK = MEMORY_SEARCH_TOP_K,
-        minScore = MEMORY_MIN_SCORE,
+        topK = config.MEMORY_SEARCH_TOP_K,
+        minScore = config.MEMORY_MIN_SCORE,
         planVersion = "Lite",
     } = options;
 

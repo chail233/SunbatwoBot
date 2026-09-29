@@ -1,7 +1,7 @@
 // @ts-check
 
 import logger from "../utils/logger.js";
-import { SENTENCE_LIMIT_COUNT, SENTENCE_LIMIT_TIME } from "../consts.js";
+import config from "../config.js";
 
 const API_URL = "https://v1.hitokoto.cn/?min_length=20&max_length=100";
 
@@ -16,11 +16,11 @@ let lastTime = Date.now();
 export default async function getHitokoto() {
     // 限流检查
     const nowTime = Date.now();
-    if (nowTime - lastTime > SENTENCE_LIMIT_TIME) {
+    if (nowTime - lastTime > config.SENTENCE_LIMIT_TIME) {
         lastTime = nowTime;
         count = 0;
     }
-    if (count >= SENTENCE_LIMIT_COUNT) {
+    if (count >= config.SENTENCE_LIMIT_COUNT) {
         logger.warn("一言 API 调用超过限流");
         return null;
     }

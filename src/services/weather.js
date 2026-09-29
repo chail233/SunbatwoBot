@@ -1,13 +1,12 @@
 // @ts-check
 
 import axios from "axios";
-import config from "../config/index.js";
+import config from "../config.js";
 import logger from "../utils/logger.js";
-import {QW_BASE_URL, QW_GEO_BASE} from "../consts.js";
 
 const KEY = config.qweatherKEY;
-const BASE_URL = QW_BASE_URL;
-const GEO_BASE = QW_GEO_BASE;
+const BASE_URL = config.QW_BASE_URL;
+const GEO_BASE = config.QW_GEO_BASE;
 
 /** axios 实例，统一超时 */
 const api = axios.create({ timeout: 8000 });

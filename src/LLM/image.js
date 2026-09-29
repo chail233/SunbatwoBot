@@ -1,7 +1,7 @@
 // @ts-check
 
 import { callLLM } from "./client.js";
-import { VISION_MODEL } from "../consts.js";
+import config from "../config.js";
 import logger from "../utils/logger.js";
 
 /**
@@ -27,7 +27,7 @@ export default async function recognizeImage(base64, type) {
     }
 
     const result = await callLLM({
-        model: VISION_MODEL,
+        model: config.VISION_MODEL,
         messages: [
             {
                 role: "user",

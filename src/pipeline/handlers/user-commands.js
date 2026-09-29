@@ -4,7 +4,7 @@ import { getWeatherText } from "../../services/weather.js";
 import { getModelsText } from "../../services/getModels.js";
 import recorder from "../../llm/recorder.js";
 import {setting} from "./proactive-chat.js";
-import {CHAT_MODEL} from "../../consts.js";
+import config from "../../config.js";
 
 /**
  * 用户命令处理器
@@ -74,7 +74,7 @@ USER_CMD_MAP.set("mls", async (args, ctx) => {
 USER_CMD_MAP.set("ms", async (args, ctx) => {
     if (!ctx.isAdmin) return "无权限";
     if (args.length === 0) return "缺少参数";
-    CHAT_MODEL = args[0];
+    config.CHAT_MODEL = args[0];
     return `切换了模型为 ${args[0]}`;
 });
 /**

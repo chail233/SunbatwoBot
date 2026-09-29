@@ -1,7 +1,6 @@
 // @ts-check
 
-import config from "../config/index.js";
-import members from "../data/members.js";
+import config from "../config.js";
 
 /**
  * 从原始 OneBot 事件构建管道上下文
@@ -53,8 +52,8 @@ function extractText(segments) {
  */
 function resolveName(event) {
     const userId = event.user_id?.toString();
-    if (userId && members.has(userId)) {
-        return members.get(userId);
+    if (userId && config.members.has(userId)) {
+        return config.members.get(userId);
     }
     return event.sender?.nickname ?? "未知";
 }

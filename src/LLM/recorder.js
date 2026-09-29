@@ -1,9 +1,8 @@
 // @ts-check
 
-import {CHAT_HISTORY_LIMIT, CHAT_MODEL} from "../consts.js";
+import config from "../config.js";
 import { callLLM } from "./client.js";
 import { addMemory, makeMemoryUserId } from "./long-term-memory.js";
-import config from "../config/index.js";
 /**
  * 对话上下文管理器（三层记忆）
  *
@@ -16,7 +15,7 @@ export class ChatRecorder {
     /**
      * @param {number} [limit] 最大消息条数
      */
-    constructor(limit = CHAT_HISTORY_LIMIT) {
+    constructor(limit = config.CHAT_HISTORY_LIMIT) {
         this._messages = [];
         this._cache = [];
         this._midSummary = "";
@@ -93,7 +92,7 @@ export class ChatRecorder {
             }
         }
         const result = await callLLM({
-            model: CHAT_MODEL,
+            model: config.CHAT_MODEL,
             messages: [
                 {
                     role: "user",
