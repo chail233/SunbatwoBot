@@ -57,7 +57,7 @@ const baseConfig = {
     LLM_API_URL: "https://workspace.aliyuncs.com",
 
     /** 聊天模型名称 */
-    CHAT_MODEL: "deepseek-v4-flash",
+    CHAT_MODEL: "deepseek-v4.1-flash",
 
     /** 识图模型名称 */
     VISION_MODEL: "qwen3.7-flash",
@@ -84,7 +84,7 @@ const baseConfig = {
     MEMORY_API_BASE_URL: "https://workspace.aliyuncs.com/api/v2/apps/memory",
 
     /** 长期记忆搜索：最大召回数量 */
-    MEMORY_SEARCH_TOP_K: 5,
+    MEMORY_SEARCH_TOP_K: 10,
 
     /** 长期记忆搜索：最小相似度阈值 */
     MEMORY_MIN_SCORE: 0.3,
