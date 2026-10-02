@@ -23,6 +23,8 @@ export class ChatRecorder {
         this._needsSummarization = false;
     }
 
+    msgWithoutChat = 0;
+
     /**
      * 添加一条消息
      * 超出短期限制的消息自动进入中期缓存
@@ -30,7 +32,6 @@ export class ChatRecorder {
      */
     add(msg) {
         if (typeof msg.content !== "string") {
-            // 防御：content 非字符串（如误传对象）时不参与纯文本判断，避免报错
             this._messages.push(msg);
             while (this._messages.length > this._limit) {
                 const evicted = this._messages.shift();
@@ -64,7 +65,7 @@ export class ChatRecorder {
     }
 
     /**
-     * 执行缓存概括（如果需要）
+     * 执行缓存概括
      * 异步调用 LLM 概括缓存中的对话，更新中期概括文本。
      * 在覆盖旧概括前，会先将旧的概括内容存入长期记忆。
      */

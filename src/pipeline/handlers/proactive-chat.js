@@ -11,7 +11,6 @@ import {sendAiReply} from "./ai-chat.js";
  */
 
 /** 无 AI 参与的消息计数 */
-let msgWithoutChat = 0;
 export let setting = {
     enable: true,
 }
@@ -26,9 +25,9 @@ export default async function proactiveChat(ctx) {
     const pre = `${ctx.senderName}:\n`;
     recorder.add({ role: "user", content: pre + text });
     // 检查是否达到主动触发阈值
-    if (msgWithoutChat >= config.PROACTIVE_CHAT_LIMIT) {
+    if (recorder.msgWithoutChat >= config.PROACTIVE_CHAT_LIMIT) {
         logger.info("达到主动聊天阈值，触发 AI 对话");
-        msgWithoutChat = 0;
+        recorder.msgWithoutChat = 0;
         const res = await chatAPI();
         if (typeof res !== "string") {
             await sendAiReply(ctx.adapter, ctx.event.group_id, res);
@@ -37,6 +36,6 @@ export default async function proactiveChat(ctx) {
     }
 
     // 未达到阈值
-    msgWithoutChat++;
+    recorder.msgWithoutChat++;
     return false;
 }

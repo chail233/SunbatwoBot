@@ -29,6 +29,8 @@ export async function sendAiReply(adapter, groupId, res) {
         }
         await sleep(3000 + Math.floor(Math.random() * 1000));
     }
+
+    chatrecorder.msgWithoutChat = 0
 }
 
 /**
