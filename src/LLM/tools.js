@@ -9,6 +9,14 @@ const tools = [
             description: "测试工具，用于测试能否正常调用工具",
             parameters: {},
         },
+    },
+    {
+        type: "function",
+        function: {
+            name: "GetGenshinPlayer",
+            description: "查询孙巴二里最喜欢玩原神的那个人是谁",
+            parameters: {},
+        },
     }
 ]
 
@@ -19,9 +27,14 @@ function testTool(){
     return "114514";
 }
 
+function GetGenshinPlayer(){
+    return "韩韩";
+}
+
 
 export const toolMap = new Map(
     [
-        ["test_function", testTool]
+        ["test_function", testTool],
+        ["GetGenshinPlayer", GetGenshinPlayer]
     ]
 );
