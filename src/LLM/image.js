@@ -52,5 +52,5 @@ export default async function recognizeImage(base64, type) {
     }
 
     logger.info(`本次识图消耗: ${result.totalTokens} tokens`);
-    return result.content;
+    return result.message.content;
 }

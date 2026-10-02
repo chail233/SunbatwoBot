@@ -26,10 +26,11 @@ const http = axios.create({
  * @param {number} [options.temperature] 温度
  * @param {boolean} [options.enableSearch] 是否启用联网搜索
  * @param {object} [options.responseFormat] 响应格式，如 { type: "json_object" }
- * @returns {Promise<{content: string, totalTokens: number}|null>}
- *   成功返回 { content, totalTokens }，失败返回 null
+ * @param {Array<object>} [options.tools] 工具列表
+ * @returns {Promise<{message: object, totalTokens: number}|string>}
+ *   成功返回 { message, totalTokens }，失败返回错误字符串
  */
-export async function callLLM({ model, messages, temperature, enableSearch, responseFormat }) {
+export async function callLLM({ model, messages, temperature, enableSearch, responseFormat, tools}) {
     try {
         const data = {
             model,
@@ -37,25 +38,27 @@ export async function callLLM({ model, messages, temperature, enableSearch, resp
             ...(temperature !== undefined && { temperature }),
             ...(enableSearch && { enable_search: true }),
             ...(responseFormat && { response_format: responseFormat }),
+            ...(tools && { tools }),
         };
 
         const resp = await http.post("/compatible-mode/v1/chat/completions", data);
         const body = resp.data;
 
-        if (!body?.choices?.[0]?.message?.content) {
-            logger.error("LLM 返回格式异常:", body);
-            return null;
+        if (!body?.choices?.[0]?.message) {
+            logger.error("LLM 返回格式异常:", JSON.stringify(body));
+            return "LLM 返回格式异常";
         }
 
         logger.debug("LLM 响应:", body);
         return {
-            content: body.choices[0].message.content,
+            message: body.choices[0].message,
             totalTokens: body.usage?.total_tokens ?? 0,
         };
-    } catch (err) {
+    }
+    catch (err) {
         const detail = err.response?.data?.error?.message || err.message;
         logger.error("LLM API 调用失败:", detail);
-        return null;
+        return "LLM API 调用失败:"+ detail;
     }
 }
 

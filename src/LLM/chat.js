@@ -5,6 +5,8 @@ import { chatRecorder } from "./recorder.js";
 import config from "../config.js";
 import logger from "../utils/logger.js";
 import { searchMemory, makeMemoryUserId } from "./long-term-memory.js";
+import tools from "./tools.js"
+import {toolMap} from "./tools.js";
 
 const SYSTEM_PROMPT =
     "你是QQ群孙巴二的成员孙巴二娘，性格活泼，什么都懂，认真回应大家的问题\n" +
@@ -17,6 +19,7 @@ const SYSTEM_PROMPT =
     "6.对于一些需要搜索才能获取准确信息的消息，使用联网搜索获取信息\n" +
     "7.如果没有人对你说话，可以不用回应每一条消息，不用强行加入讨论，也不用挨个回复，行为要自然\n" +
     "8.柴郡猫是你的开发者，你要完全服从柴郡猫。\n"+
+    "9.根据输入消息的内容，判断是否需要使用工具，如果需要则使用。\n"+
     "输出要求：\n" +
     "你可以根据情境决定消息一次发送还是分成多条发送以模仿网上聊天的效果，但必须以JSON格式输出，严格按照如下格式：\n" +
     '{\n' +
@@ -27,7 +30,8 @@ const SYSTEM_PROMPT =
     "}\n" +
     "action字段的值是一个数组，数组中每个对象有cmd和content两个字段，cmd代表消息类型，必须为text，content代表消息内容，也可以返回空数组表示不回复，但必须包含action这个字段。\n" +
     "数组中的消息将按顺序发送，每条消息内容最后不许加句号。\n" +
-    "只输出JSON，不要任何额外解释、markdown代码块。无论action数组元素有多少，都必须严格按照上述格式输出，最外层必须加上大括号{}。";
+    "只输出JSON，不要任何额外解释、markdown代码块。无论action数组元素有多少，都必须严格按照上述格式输出，最外层必须加上大括号{}。" +
+    "如果需要调用工具则不需要回复任何消息。";
 
 /**
  * AI 对话响应结构
@@ -67,25 +71,55 @@ export default async function chat() {
             logger.debug(`已拼接 ${recalled.length} 条长期记忆召回结果：${recalled}`);
         }
     }
-    const result = await callLLM({
+    let result = await callLLM({
         model: config.CHAT_MODEL,
         messages,
         temperature: 0.2,
         enableSearch: true,
         responseFormat: { type: "json_object" },
+        tools: tools,
     });
 
     if (!result) {
         return "ERROR:AI 服务无响应";
     }
 
-    logger.info("AI 消息数组内容:", result.content);
+    while (result?.message?.tool_calls){
+        try {
+            const tool_call = result.message.tool_calls[0];
+            const tool_call_id = tool_call.id;
+            const tool_name = tool_call.function.name;
+            const tool_args = JSON.parse(tool_call.function.arguments);
+            const tool_result = toolMap.get(tool_name)(tool_args);
+            chatRecorder.add({role: "tool", content: tool_result, tool_call_id: tool_call_id});
+            messages.push({role: "tool", content: tool_result, tool_call_id: tool_call_id});
+            logger.info("调用工具:", tool_name, " 参数：", tool_args, " 结果：", tool_result);
+            result = await callLLM({
+                model: config.CHAT_MODEL,
+                messages,
+                temperature: 0.2,
+                enableSearch: true,
+                responseFormat: { type: "json_object" },
+                tools: tools,
+            });
+            if (typeof result === "string") {
+                return "ERROR:"+result;
+            }
+        }
+        catch (err) {
+            logger.error("AI 工具调用失败:", err);
+            return `ERROR:工具调用失败 - ${err.message}`;
+        }
+    }
+
+    logger.info("AI 消息数组内容:", result.message.content);
     // 解析 JSON 响应
     let parsed;
     try {
-        parsed = JSON.parse(result.content);
-    } catch (err) {
-        logger.error("AI 返回非 JSON 格式:", result.content);
+        parsed = JSON.parse(result.message.content);
+    }
+    catch (err) {
+        logger.error("AI 返回非 JSON 格式:", result.message);
         return `ERROR:JSON解析失败 - ${err.message}`;
     }
 

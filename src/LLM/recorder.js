@@ -28,7 +28,6 @@ export class ChatRecorder {
     /**
      * 添加一条消息
      * 超出短期限制的消息自动进入中期缓存
-     * @param {{role: string, content: string}} msg
      */
     add(msg) {
         if (typeof msg.content !== "string") {
@@ -88,7 +87,7 @@ export class ChatRecorder {
             if(msg.role==="user"){
                 userMsgs += msg.content + "\n";
             }
-            else {
+            if(msg.role==="assistant"){
                 userMsgs += "我:" + msg.content + "\n";
             }
         }
@@ -108,12 +107,12 @@ export class ChatRecorder {
                     content: userMsgs
                 }
             ],
-            temperature: 0.3,
+            temperature: 0.2,
             enableSearch:false
         });
 
         if (result) {
-            this._midSummary = result.content;
+            this._midSummary = result.message.content;
         }
 
         this._cache = [];
