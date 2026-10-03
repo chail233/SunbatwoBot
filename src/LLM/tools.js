@@ -33,14 +33,20 @@ async function testTool(param){
 }
 
 
-async function getMemory(param){
-    // 搜索长期记忆
+async function getMemory(param) {
     const shortTermMessages = chatRecorder.getAll();
     if (shortTermMessages.length > 0) {
         const userId = makeMemoryUserId(config.targetGroupId);
-        const recalled = await searchMemory(userId, shortTermMessages.slice(-10));
+
+        const userMessages = shortTermMessages
+            .filter((m) => m.role === "user" || m.role === "assistant")
+            .slice(-10);
+
+        if (userMessages.length === 0) return "没有有效对话记录";
+
+        const recalled = await searchMemory(userId, userMessages);
         logger.debug("长期记忆搜索结果:", recalled);
-        return recalled.join("\n") || "没有找到相关记忆";
+        return recalled.join("\n---\n") || "没有找到相关记忆";
     }
     return "没有对话记录，无法搜索记忆";
 }

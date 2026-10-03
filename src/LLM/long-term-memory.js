@@ -79,7 +79,7 @@ export async function searchMemory(userId, messages, options = {}) {
     const {
         topK = config.MEMORY_SEARCH_TOP_K,
         minScore = config.MEMORY_MIN_SCORE,
-        planVersion = "Lite",
+        planVersion = "Pro",
     } = options;
 
     try {
@@ -89,6 +89,7 @@ export async function searchMemory(userId, messages, options = {}) {
             top_k: topK,
             min_score: minScore,
             plan_version: planVersion,
+            enable_rewrite: true,
         };
 
         const resp = await http.post("/memory_nodes/search", payload);
