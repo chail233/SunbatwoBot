@@ -99,15 +99,13 @@ export async function searchMemory(userId, messages, options = {}) {
         }
 
         // 按相似度排序并过滤，提取内容
-        const results = body.memory_nodes
+        return body.memory_nodes
             .filter((node) => (node.score ?? 1) >= minScore)
             .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
             .map((node) => node.content)
             .filter(Boolean);
-
-        logger.debug(`长期记忆召回: ${results.length} 条结果`);
-        return results;
-    } catch (err) {
+    }
+    catch (err) {
         const detail = err.response?.data?.message || err.message;
         logger.warn("长期记忆搜索失败（不影响主流程）:", detail);
         return [];

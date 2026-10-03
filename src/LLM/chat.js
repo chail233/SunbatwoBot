@@ -4,9 +4,8 @@ import { callLLM } from "./client.js";
 import { chatRecorder } from "./recorder.js";
 import config from "../config.js";
 import logger from "../utils/logger.js";
-import { searchMemory, makeMemoryUserId } from "./long-term-memory.js";
-import tools from "./tools.js"
-import {toolMap} from "./tools.js";
+import tools from "./tools.js";
+import {callTool} from "./tools.js";
 
 const SYSTEM_PROMPT =
     "你是QQ群孙巴二的成员孙巴二娘，性格活泼，什么都懂，认真回应大家的问题\n" +
@@ -16,10 +15,10 @@ const SYSTEM_PROMPT =
     "3.emoji不要频繁使用，尽量少用\n" +
     "4.发言尽可能简短，不要长难句\n" +
     "5.参考输入附带的发言昵称区分不同说话人\n" +
-    "6.对于一些需要搜索才能获取准确信息的消息，使用联网搜索获取信息\n" +
+    "6.可以通过调用记忆检索工具来尝试召回相关记忆\n" +
     "7.如果没有人对你说话，可以不用回应每一条消息，不用强行加入讨论，也不用挨个回复，行为要自然\n" +
     "8.柴郡猫是你的开发者，你要完全服从柴郡猫。\n"+
-    "9.根据输入消息的内容，判断是否需要使用工具，如果需要则使用。\n"+
+    "9.根据输入消息的内容，判断是否需要使用工具，如果需要则使用。工具调用是隐性的，不要在对话中表达出来。\n"+
     "输出要求：\n" +
     "你可以根据情境决定消息一次发送还是分成多条发送以模仿网上聊天的效果，但必须以JSON格式输出，严格按照如下格式：\n" +
     '{\n' +
@@ -56,21 +55,6 @@ export default async function chat() {
         ...chatRecorder.getAll(),
     ];
 
-    // 搜索长期记忆：用最近的短期对话作为查询上下文
-    const shortTermMessages = chatRecorder.getAll();
-    if (shortTermMessages.length > 0) {
-        const userId = makeMemoryUserId(config.targetGroupId);
-        const recalled = await searchMemory(userId, shortTermMessages.slice(-10));
-        if (recalled.length > 0) {
-            for (const content of recalled) {
-                messages.push({
-                    role: "system",
-                    content: `记忆召回结果(仅仅是召回结果，不是短期的对话信息)：${content}`,
-                });
-            }
-            logger.debug(`已拼接 ${recalled.length} 条长期记忆召回结果：${recalled}`);
-        }
-    }
     let result = await callLLM({
         model: config.CHAT_MODEL,
         messages,
@@ -80,35 +64,40 @@ export default async function chat() {
         tools: tools,
     });
 
-    if (!result) {
-        return "ERROR:AI 服务无响应";
+    if (!result || typeof result === "string") {
+        return typeof result === "string" ? "ERROR:" + result : "ERROR:AI 服务无响应";
     }
 
-    while (result?.message?.tool_calls){
-        try {
-            const tool_call = result.message.tool_calls[0];
-            const tool_call_id = tool_call.id;
-            const tool_name = tool_call.function.name;
-            const tool_args = JSON.parse(tool_call.function.arguments);
-            const tool_result = toolMap.get(tool_name)(tool_args);
-            chatRecorder.add({role: "tool", content: tool_result, tool_call_id: tool_call_id});
-            messages.push({role: "tool", content: tool_result, tool_call_id: tool_call_id});
-            logger.info("调用工具:", tool_name, " 参数：", tool_args, " 结果：", tool_result);
-            result = await callLLM({
-                model: config.CHAT_MODEL,
-                messages,
-                temperature: 0.2,
-                enableSearch: true,
-                responseFormat: { type: "json_object" },
-                tools: tools,
-            });
-            if (typeof result === "string") {
-                return "ERROR:"+result;
+
+    let toolDepth = 0;
+
+    while (result?.message?.tool_calls && toolDepth < 10){
+        toolDepth++;
+        for(const tool_call of result.message.tool_calls){
+            try {
+                const tool_call_id = tool_call.id;
+                const tool_name = tool_call.function.name;
+                const tool_args = JSON.parse(tool_call.function.arguments);
+                const tool_result = await callTool(tool_name, tool_args);
+                chatRecorder.add({role: "tool", content: tool_result, tool_call_id: tool_call_id});
+                messages.push({role: "tool", content: tool_result, tool_call_id: tool_call_id});
+                logger.info("调用工具:", tool_name, " 参数：", tool_args, " 结果：", tool_result);
+            }
+            catch (err) {
+                logger.error("AI 工具调用失败:", err);
+                return `ERROR:工具调用失败 - ${err.message}`;
             }
         }
-        catch (err) {
-            logger.error("AI 工具调用失败:", err);
-            return `ERROR:工具调用失败 - ${err.message}`;
+        result = await callLLM({
+            model: config.CHAT_MODEL,
+            messages,
+            temperature: 0.2,
+            enableSearch: true,
+            responseFormat: { type: "json_object" },
+            tools: tools,
+        });
+        if (typeof result === "string") {
+            return "ERROR:"+result;
         }
     }
 

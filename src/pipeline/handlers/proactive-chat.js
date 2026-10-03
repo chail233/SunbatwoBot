@@ -32,6 +32,9 @@ export default async function proactiveChat(ctx) {
         if (typeof res !== "string") {
             await sendAiReply(ctx.adapter, ctx.event.group_id, res);
         }
+        else{
+            logger.error("AI 响应异常:", res);
+        }
         return true;
     }
 
