@@ -2,6 +2,7 @@
 
 import needRepeat from "../../tools/repeater.js";
 import recorder from "../../llm/recorder.js";
+import { nowTime } from "../../utils/time.js";
 
 /**
  * 复读处理器
@@ -19,7 +20,7 @@ export default async function repeater(ctx) {
 
     if (needRepeat(ctx.text)) {
         ctx.adapter.sendGroupMsg(ctx.event.group_id, ctx.text);
-        recorder.add({ role: "assistant", content: ctx.text });
+        recorder.add({ role: "assistant", content: { text: ctx.text, time: nowTime() } });
         return true;
     }
 

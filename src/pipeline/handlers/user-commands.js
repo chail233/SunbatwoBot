@@ -45,7 +45,19 @@ USER_CMD_MAP.set("help", async (args, ctx) => {
 USER_CMD_MAP.set("msgs", async (args, ctx) => {
     const all = recorder.getAll();
     if (all.length === 0) return "短期记录为空";
-    const lines = all.map((m, i) => `[${i + 1}] ${m.role}: ${m.content.slice(0, 80)}`);
+    const lines = all.map((m, i) => {
+        let preview;
+        try {
+            const c = JSON.parse(m.content);
+            const name = c.name ? `[${c.name}] ` : "";
+            const text = c.text ?? "";
+            preview = `${name}${text}`.slice(0, 80);
+        }
+        catch {
+            preview = String(m.content).slice(0, 80);
+        }
+        return `[${i + 1}] ${m.role}: ${preview}`;
+    });
     return `短期记录共 ${all.length} 条：\n${lines.join("\n")}`;
 });
 

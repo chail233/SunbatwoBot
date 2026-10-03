@@ -4,6 +4,7 @@ import chatAPI from "../../llm/chat.js";
 import sleep from "../../utils/sleep.js";
 import logger from "../../utils/logger.js";
 import chatrecorder from "../../llm/recorder.js";
+import { formatTime } from "../../utils/time.js";
 
 /**
  * AI 对话处理器
@@ -43,7 +44,13 @@ export default async function aiChat(ctx) {
     const content = ctx.text + (ctx.imageDescription ? `\n${ctx.imageDescription}` : "");
     const msg = {
         role: "user",
-        content: `${ctx.senderName}对你说:\n${content}`,
+        content: {
+            name: ctx.senderName,
+            qq: ctx.userId,
+            time: formatTime(ctx.event.time),
+            text: content,
+            at: "我"
+        },
     };
     chatrecorder.add(msg);
     logger.info("AI 对话请求:", content);

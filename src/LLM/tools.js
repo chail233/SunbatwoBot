@@ -1,5 +1,5 @@
 import chatRecorder from "./recorder.js";
-import {makeMemoryUserId, searchMemory} from "./long-term-memory.js";
+import {makeMemoryUserId, searchMemory, getUserProfile} from "./long-term-memory.js";
 import config from "../config.js";
 import logger from "../utils/logger.js";
 
@@ -21,6 +21,23 @@ const tools = [
             name: "get_memory",
             description: "根据当前对话内容搜索相关记忆",
             parameters: {},
+        },
+    },
+    {
+        type: "function",
+        function: {
+            name: "get_user_profile",
+            description: "根据用户 QQ 号获取该用户的画像信息，可用于了解特定用户的偏好、性格等",
+            parameters: {
+                type: "object",
+                properties: {
+                    qq: {
+                        type: "string",
+                        description: "用户的 QQ 号",
+                    },
+                },
+                required: ["qq"],
+            },
         },
     }
 ]
@@ -51,12 +68,26 @@ async function getMemory(param) {
     return "没有对话记录，无法搜索记忆";
 }
 
+/**
+ * 获取指定用户的画像信息
+ * @param {{qq: string}} param
+ */
+async function getUserProfileTool(param) {
+    const qq = param?.qq;
+    if (!qq) return "缺少 QQ 号参数";
+
+    const profile = await getUserProfile(qq);
+    if (!profile) return `未找到 QQ 号 ${qq} 的用户画像`;
+    return profile;
+}
+
 
 
 const toolMap = new Map(
     [
         ["test_function", testTool],
         ["get_memory", getMemory],
+        ["get_user_profile", getUserProfileTool],
     ]
 );
 

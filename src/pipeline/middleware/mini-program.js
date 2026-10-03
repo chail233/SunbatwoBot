@@ -2,6 +2,7 @@
 
 import recorder from "../../llm/recorder.js";
 import logger from "../../utils/logger.js";
+import { formatTime } from "../../utils/time.js";
 
 /**
  * 小程序/链接分享处理中间件
@@ -19,8 +20,16 @@ export default async function miniProgram(ctx) {
                 const title = parsed?.meta?.detail_1?.title;
                 if (title) {
                     logger.info("小程序消息:", seg.data.data);
-                    const text = `${ctx.senderName}:\n[分享了${title}消息]`;
-                    recorder.add({ role: "user", content: text });
+                    const text = `[分享了${title}消息]`;
+                    recorder.add({
+                        role: "user",
+                        content: {
+                            name: ctx.senderName,
+                            qq: ctx.userId,
+                            time: formatTime(ctx.event.time),
+                            text,
+                        },
+                    });
                     ctx.handled = true;
                     return true;
                 }

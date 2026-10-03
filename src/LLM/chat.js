@@ -2,6 +2,7 @@
 
 import { callLLM } from "./client.js";
 import { chatRecorder } from "./recorder.js";
+import { nowTime } from "../utils/time.js";
 import config from "../config.js";
 import logger from "../utils/logger.js";
 import tools from "./tools.js";
@@ -56,8 +57,7 @@ export default async function chat() {
                 const tool_name = tool_call.function.name;
                 const tool_args = JSON.parse(tool_call.function.arguments);
                 const tool_result = await callTool(tool_name, tool_args);
-                chatRecorder.add({role: "tool", content: tool_result, tool_call_id: tool_call_id});
-                messages.push({role: "tool", content: tool_result, tool_call_id: tool_call_id});
+                chatRecorder.add({role: "tool", content: { text: tool_result, time: nowTime() }, tool_call_id: tool_call_id});
                 logger.info("调用工具:", tool_name, " 参数：", tool_args, " 结果：", tool_result);
             }
             catch (err) {
@@ -65,9 +65,17 @@ export default async function chat() {
                 return `ERROR:工具调用失败 - ${err.message}`;
             }
         }
+        // 重建消息列表
+        const updatedMessages = [
+            { role: "system", content: SYSTEM_PROMPT },
+            ...(chatRecorder.getMidSummary()
+                ? [{ role: "system", content: `对话历史概要：${chatRecorder.getMidSummary()}` }]
+                : []),
+            ...chatRecorder.getAll(),
+        ];
         result = await callLLM({
             model: config.CHAT_MODEL,
-            messages,
+            messages: updatedMessages,
             temperature: 0.2,
             enableSearch: true,
             responseFormat: { type: "json_object" },
@@ -91,7 +99,7 @@ export default async function chat() {
 
     if(Array.isArray(parsed.action)){
         // 记录 AI 回复
-        chatRecorder.add({ role: "assistant", content: JSON.stringify(parsed) });
+        chatRecorder.add({ role: "assistant", content:parsed});
     }
 
     return {

@@ -5,6 +5,7 @@ import recorder from "../../llm/recorder.js";
 import logger from "../../utils/logger.js";
 import config from "../../config.js";
 import {sendAiReply} from "./ai-chat.js";
+import { formatTime } from "../../utils/time.js";
 /**
  * 主动聊天处理器
  * 当群内连续若干条消息无 AI 参与时，主动触发一次对话
@@ -22,8 +23,15 @@ export let setting = {
 export default async function proactiveChat(ctx) {
     if(!setting.enable) return false;
     const text = ctx.text + (ctx.imageDescription ? `\n${ctx.imageDescription}` : "");
-    const pre = `${ctx.senderName}:\n`;
-    recorder.add({ role: "user", content: pre + text });
+    recorder.add({
+        role: "user",
+        content: {
+            name: ctx.senderName,
+            qq: ctx.userId,
+            time: formatTime(ctx.event.time),
+            text: text,
+        },
+    });
     // 检查是否达到主动触发阈值
     if (recorder.msgWithoutChat >= config.PROACTIVE_CHAT_LIMIT) {
         logger.info("达到主动聊天阈值，触发 AI 对话");

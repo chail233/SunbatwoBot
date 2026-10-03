@@ -2,7 +2,7 @@
 
 import config from "../config.js";
 import { callLLM } from "./client.js";
-import { addMemory, makeMemoryUserId } from "./long-term-memory.js";
+import { addMemory, makeMemoryUserId, extractUserProfile } from "./long-term-memory.js";
 /**
  * 对话上下文管理器（三层记忆）
  *
@@ -27,22 +27,13 @@ export class ChatRecorder {
 
     /**
      * 添加一条消息
+     * content 统一为对象格式：{ text, ...其他字段 }
      * 超出短期限制的消息自动进入中期缓存
      */
     add(msg) {
-        if (typeof msg.content !== "string") {
-            this._messages.push(msg);
-            while (this._messages.length > this._limit) {
-                const evicted = this._messages.shift();
-                this._cache.push(evicted);
-            }
-            if (this._cache.length >= this._limit && !this._needsSummarization) {
-                this._needsSummarization = true;
-            }
-            return;
-        }
-        const realText = msg.content.replace(/[\s\u3000\u200b\u200c\u200d]/g, '');
+        const realText = (msg.content?.text ?? "").replace(/[\s\u3000\u200b\u200c\u200d]/g, '');
         if (realText === "") return;
+
         this._messages.push(msg);
         while (this._messages.length > this._limit) {
             const evicted = this._messages.shift();
@@ -53,9 +44,12 @@ export class ChatRecorder {
         }
     }
 
-    /** 获取所有短期消息的副本 */
+    /** 获取所有短期消息的副本（content 序列化为字符串） */
     getAll() {
-        return [...this._messages];
+        return this._messages.map((msg) => {
+            const { content, ...rest } = msg;
+            return { ...rest, content: JSON.stringify(content) };
+        });
     }
 
     /** 获取中期概括文本 */
@@ -79,16 +73,20 @@ export class ChatRecorder {
             ]);
         }
 
-        // 2. 生成新的概括
+        // 2. 按用户分组提取画像
+        await this._extractProfilesFromCache();
+
+        // 3. 生成新的概括
         let userMsgs = "";
         for(let i=0;i<this._cache.length;i++) {
             const msg = this._cache[i];
+            const text = msg.content?.text ?? "";
             userMsgs += `${i+1}.`;
             if(msg.role==="user"){
-                userMsgs += msg.content + "\n";
+                userMsgs += text + "\n";
             }
             if(msg.role==="assistant"){
-                userMsgs += "我:" + msg.content + "\n";
+                userMsgs += "\u6211:" + text + "\n";
             }
         }
         const result = await callLLM({
@@ -117,6 +115,35 @@ export class ChatRecorder {
 
         this._cache = [];
         this._needsSummarization = false;
+    }
+
+    /**
+     * 从缓存中按用户分组提取画像
+     * 将缓存中的 user 消息按 content.qq（QQ 号）分组，每组单独调用画像提取
+     */
+    async _extractProfilesFromCache() {
+        /** @type {Map<string, Array<{role: string, content: string}>>} */
+        const userMessagesMap = new Map();
+
+        for (const msg of this._cache) {
+            if (msg.role === "user" && msg.content?.qq) {
+                const qq = msg.content.qq;
+                if (!userMessagesMap.has(qq)) {
+                    userMessagesMap.set(qq, []);
+                }
+                userMessagesMap.get(qq).push({
+                    role: "user",
+                    content: JSON.stringify(msg.content),
+                });
+            }
+        }
+
+        // 对每个用户分别提取画像
+        for (const [qq, msgs] of userMessagesMap) {
+            if (msgs.length > 0) {
+                await extractUserProfile(qq, msgs.slice(-20));
+            }
+        }
     }
 
     /** 清空所有记忆（短期、缓存、概括） */

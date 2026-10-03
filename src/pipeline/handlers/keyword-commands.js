@@ -4,6 +4,7 @@ import getSentence from "../../services/hitokoto.js";
 import getAcg from "../../services/acg.js";
 import getSunGirl from "../../data/sunbatwo-girls.js";
 import recorder from "../../llm/recorder.js";
+import { nowTime } from "../../utils/time.js";
 
 /**
  * 关键词命令处理器
@@ -14,12 +15,13 @@ const CMD_MAP = new Map();
 
 CMD_MAP.set("来句台词", async (ctx) => {
     const sentence = await getSentence();
+    const time = nowTime();
     if (sentence) {
         ctx.adapter.sendGroupMsg(ctx.event.group_id, sentence);
-        recorder.add({ role: "assistant", content: sentence });
+        recorder.add({ role: "assistant", content: { text: sentence, time } });
     } else {
         ctx.adapter.sendGroupMsg(ctx.event.group_id, "别急");
-        recorder.add({ role: "assistant", content: "别急" });
+        recorder.add({ role: "assistant", content: { text: "别急", time } });
     }
 });
 
