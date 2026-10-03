@@ -1,5 +1,16 @@
 # SunbatwoBot
 
+<div align="center">
+
+[![GitHub Stars](https://img.shields.io/github/stars/chail233/SunbatwoBot?style=flat-square&logo=github&color=gold)](https://github.com/chail233/SunbatwoBot/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/chail233/SunbatwoBot?style=flat-square&logo=github)](https://github.com/chail233/SunbatwoBot/forks)
+[![GitHub Issues](https://img.shields.io/github/issues/chail233/SunbatwoBot?style=flat-square&logo=github)](https://github.com/chail233/SunbatwoBot/issues)
+[![License](https://img.shields.io/github/license/chail233/SunbatwoBot?style=flat-square)](https://github.com/chail233/SunbatwoBot/blob/master/LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
+[![OneBot](https://img.shields.io/badge/OneBot-v11-black?style=flat-square)](https://github.com/botuniverse/onebot-11)
+
+</div>
+
 这是一个基于 NapCat + OneBot v11 协议的 QQ 机器人服务端。包含了一些已经开发好的功能，
 如关键词识别、执行指令、ai对话等。
 
@@ -8,7 +19,8 @@
 - 区别不同的发言人
 - 主动发言、发送多条消息
 - 联网搜索
-- **长期记忆**（基于阿里云百炼记忆库，自动存储和召回对话历史中的关键信息）
+- **工具调用（Function Calling）**（AI 可自主判断并调用工具，如检索长期记忆）
+- **长期记忆**（基于阿里云百炼记忆库，通过工具调用自动存储和召回对话历史中的关键信息）
 
 你可以快速地配置并使用该项目，或者扩展开发自己想要的功能。
 
@@ -77,7 +89,7 @@ PROACTIVE_CHAT_LIMIT: 15,
 LLM_API_URL: "https://workspace.aliyuncs.com",
 
 /** 聊天模型名称 */
-CHAT_MODEL: "deepseek-v4-flash",
+CHAT_MODEL: "deepseek-v4.1-flash",
 
 /** 识图模型名称 */
 VISION_MODEL: "qwen3.7-flash",
@@ -104,7 +116,7 @@ QW_GEO_BASE: "https://m454e6xkq4.re.qweatherapi.com/geo/v2",
 MEMORY_API_BASE_URL: "https://workspace.aliyuncs.com/api/v2/apps/memory",
 
 /** 长期记忆搜索：最大召回数量 */
-MEMORY_SEARCH_TOP_K: 5,
+MEMORY_SEARCH_TOP_K: 10,
 
 /** 长期记忆搜索：最小相似度阈值 */
 MEMORY_MIN_SCORE: 0.3,
@@ -157,7 +169,8 @@ src/
 │
 ├── llm/                        # AI 语言模型层
 │   ├── client.js               # 统一 API 客户端（axios 封装）
-│   ├── chat.js                 # 对话 API（含系统提示词 + 长期记忆召回）
+│   ├── chat.js                 # 对话 API（含系统提示词 + 工具调用循环）
+│   ├── tools.js                # 工具定义与调度（Function Calling）
 │   ├── image.js                # 识图 API
 │   ├── long-term-memory.js     # 阿里云百炼长期记忆 API 封装
 │   └── recorder.js             # 对话上下文管理器（含长期记忆同步）
@@ -166,7 +179,8 @@ src/
 │   ├── napcat.js               # NapCat HTTP API 客户端
 │   ├── acg.js                  # ACG 图片 API
 │   ├── hitokoto.js             # 一言（动漫台词）API
-│   └── weather.js              # 和风天气 API
+│   ├── weather.js              # 和风天气 API
+│   └── getModels.js            # 百炼平台模型列表查询
 │
 ├── data/                       # 静态数据
 │   └── sunbatwo-girls.js       # 孙巴二娘图片 URL 列表
@@ -208,7 +222,6 @@ pipeline/index.js 管道编排器
     │   └─ mini-program      → ctx.handled = true（若匹配）
     │
     └─ 处理器（首个返回 true 即停止）
-        ├─ admin-commands    → / 前缀，仅管理员
         ├─ keyword-commands  → 精确匹配关键词
         ├─ user-commands     → # 前缀
         ├─ ai-chat           → @机器人时触发
@@ -250,24 +263,24 @@ AI 对话使用逐层压缩的记忆架构，在上下文窗口限制与长期�
   │ 被新概括覆盖前，自动存入长期记忆
   ▼
 长期记忆（阿里云百炼记忆库）
-  │ AI 回复前，以最近对话为查询进行语义召回
+  │ AI 通过工具调用（get_memory）自主检索相关记忆
   ▼
-拼入请求消息 → 供 LLM 参考
+拼入工具调用结果 → 供 LLM 参考
 ```
 
 **各层级说明：**
 
 | 层级 | 存储位置 | 容量/周期 | 触发条件 |
-|------|---------|-----------|---------|
+|------|---------|-----------|----------|
 | 短期记忆 | `ChatRecorder._messages`（内存） | 30 条 | 每次对话实时更新 |
 | 中期缓存 | `ChatRecorder._cache`（内存） | 满 30 条触发概括 | 短期溢出时 |
 | 中期概括 | `ChatRecorder._midSummary`（内存） | 每次概括覆盖 | 缓存满时 LLM 生成 |
-| 长期记忆 | 阿里云百炼记忆库（云端） | 无上限 | 旧概括被替换时存入；AI 回复前搜索 |
+| 长期记忆 | 阿里云百炼记忆库（云端） | 无上限 | 旧概括被替换时存入；AI 通过工具调用检索 |
 
 **长期记忆流程：**
 
-1. **添加**：当新的中期概括生成时，旧的概括自动以 `对话摘要：...` 格式通过 `AddMemory` API 存入记忆库，用 `SunBot{群号}` 作为记忆实体 ID
-2. **召回**：每次 AI 回复前，取最近 3 条短期消息通过 `SearchMemory` API 进行语义检索，召回结果以 `system` 角色（`记忆召回结果：...`）拼入请求消息末尾
+1. **添加**：当新的中期概括生成时，旧的概括自动以对话摘要格式通过 `AddMemory` API 存入记忆库，用 `SunBot{群号}` 作为记忆实体 ID
+2. **召回**：AI 在对话过程中自主判断是否需要检索记忆，若需要则调用 `get_memory` 工具。工具取最近 10 条有效对话消息（仅 user/assistant 角色）通过 `SearchMemory` API 进行语义检索，召回结果作为工具调用结果返回给 AI
 
 所有长期记忆操作失败均静默处理，不影响原有对话功能。
 
@@ -330,6 +343,35 @@ export async function yourFunction(params) {
 }
 ```
 
+### 工具调用（Function Calling）
+
+AI 在对话过程中可自主判断是否需要调用工具。调用流程：
+
+```
+AI 返回 tool_calls
+    │
+    ▼
+chat.js 解析工具名和参数
+    │
+    ▼
+tools.js 中的 callTool() 调度到对应函数
+    │
+    ▼
+工具执行结果作为 tool 消息追加到对话列表
+    │
+    ▼
+再次调用 LLM，直到不再返回 tool_calls（最多循环 10 次）
+```
+
+当前可用工具定义在 `llm/tools.js` 中：
+
+| 工具名 | 功能 |
+|--------|------|
+| `get_memory` | 根据当前对话内容搜索长期记忆 |
+| `test_function` | 测试工具，验证工具调用是否正常 |
+
+扩展新工具只需：在 `tools` 数组中添加定义，在 `toolMap` 中注册实现函数。
+
 ---
 
 ## 通信方式
@@ -357,22 +399,23 @@ index.js
        ├─ pipeline/middleware/
        │    ├─ image-recognizer.js ── services/napcat.js
        │    │                       ── utils/image-type.js
-       │    │                       ── llm/image.js
+       │    │                       ── llm/image.js ── llm/client.js
        │    └─ mini-program.js ── llm/recorder.js ── llm/long-term-memory.js ── config.js
        └─ pipeline/handlers/
             ├─ keyword-commands.js ── services/acg.js
             │                      ── services/hitokoto.js
             │                      ── data/sunbatwo-girls.js
-            │                      ── llm/recorder.js ── llm/long-term-memory.js
+            │                      ── llm/recorder.js
             ├─ user-commands.js ── services/weather.js
+            │                    ── services/getModels.js
             ├─ ai-chat.js ── llm/chat.js ──┬── llm/client.js
             │              │               ├── llm/recorder.js
-            │              │               └── llm/long-term-memory.js ── config.js
+            │              │               └── llm/tools.js ── llm/long-term-memory.js
             │              └── llm/recorder.js
             ├─ repeater.js ── tools/repeater.js ── utils/queue.js
             └─ proactive-chat.js ── llm/chat.js ──┬── llm/client.js
                                                   ├── llm/recorder.js
-                                                  └── llm/long-term-memory.js
+                                                  └── llm/tools.js
 ```
 
 ---
