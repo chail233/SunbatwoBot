@@ -15,7 +15,8 @@ export class ChatRecorder {
     /**
      * @param {number} [limit] 最大消息条数
      */
-    constructor(limit = config.CHAT_HISTORY_LIMIT) {
+    constructor(
+        limit = config.CHAT_HISTORY_LIMIT) {
         this._messages = [];
         this._cache = [];
         this._midSummary = "";
@@ -31,8 +32,10 @@ export class ChatRecorder {
      * 超出短期限制的消息自动进入中期缓存
      */
     add(msg) {
-        const realText = (msg.content?.text ?? "").replace(/[\s\u3000\u200b\u200c\u200d]/g, '');
-        if (realText === "") return;
+        if(msg.role==="user"){
+            const realText = (msg.content?.text ?? "").replace(/[\s\u3000\u200b\u200c\u200d]/g, '');
+            if (realText === "") return;
+        }
 
         this._messages.push(msg);
         while (this._messages.length > this._limit) {
@@ -80,14 +83,8 @@ export class ChatRecorder {
         let userMsgs = "";
         for(let i=0;i<this._cache.length;i++) {
             const msg = this._cache[i];
-            const text = msg.content?.text ?? "";
             userMsgs += `${i+1}.`;
-            if(msg.role==="user"){
-                userMsgs += text + "\n";
-            }
-            if(msg.role==="assistant"){
-                userMsgs += "\u6211:" + text + "\n";
-            }
+            userMsgs += JSON.stringify(msg) + "\n";
         }
         const result = await callLLM({
             model: config.CHAT_MODEL,

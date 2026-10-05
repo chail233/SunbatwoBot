@@ -26,7 +26,7 @@ USER_CMD_MAP.set("clear", async (args, ctx) => {
 });
 
 USER_CMD_MAP.set("help", async (args, ctx) => {
-    const helpText = [
+    return [
         "可用指令：",
         "  #gw <城市>  — 查询天气",
         "  #help       — 显示本帮助",
@@ -38,7 +38,7 @@ USER_CMD_MAP.set("help", async (args, ctx) => {
         "  #clear      — 清除短期记忆" ,
         "  #ms <模型名称>  — 设置文本模型",
     ].join("\n");
-    return helpText;
+
 });
 
 
@@ -46,17 +46,7 @@ USER_CMD_MAP.set("msgs", async (args, ctx) => {
     const all = recorder.getAll();
     if (all.length === 0) return "短期记录为空";
     const lines = all.map((m, i) => {
-        let preview;
-        try {
-            const c = JSON.parse(m.content);
-            const name = c.name ? `[${c.name}] ` : "";
-            const text = c.text ?? "";
-            preview = `${name}${text}`.slice(0, 80);
-        }
-        catch {
-            preview = String(m.content).slice(0, 80);
-        }
-        return `[${i + 1}] ${m.role}: ${preview}`;
+        return `[${i + 1}] ${m.role}: ${m.content}`;
     });
     return `短期记录共 ${all.length} 条：\n${lines.join("\n")}`;
 });
