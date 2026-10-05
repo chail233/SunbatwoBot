@@ -20,9 +20,5 @@
     "express": "^5.2.1",
     "node-schedule": "^2.1.1",
     "ws": "^8.21.3"
-  },
-  "devDependencies": {
-    "@types/node": "^24.0.0",
-    "typescript": "^7.0.2"
   }
 }

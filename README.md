@@ -6,7 +6,7 @@
 [![GitHub Forks](https://img.shields.io/github/forks/chail233/SunbatwoBot?style=flat-square&logo=github)](https://github.com/chail233/SunbatwoBot/forks)
 [![GitHub Issues](https://img.shields.io/github/issues/chail233/SunbatwoBot?style=flat-square&logo=github)](https://github.com/chail233/SunbatwoBot/issues)
 [![License](https://img.shields.io/github/license/chail233/SunbatwoBot?style=flat-square)](https://github.com/chail233/SunbatwoBot/blob/master/LICENSE)
-[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D24-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 [![OneBot](https://img.shields.io/badge/OneBot-v11-black?style=flat-square)](https://github.com/botuniverse/onebot-11)
 
 </div>
@@ -21,6 +21,7 @@
 - 联网搜索
 - **工具调用（Function Calling）**（AI 可自主判断并调用工具，如检索长期记忆）
 - **长期记忆**（基于阿里云百炼记忆库，通过工具调用自动存储和召回对话历史中的关键信息）
+- **用户画像**（基于阿里云百炼记忆库画像模板，自动提取并存储用户偏好和特征）
 
 你可以快速地配置并使用该项目，或者扩展开发自己想要的功能。
 
@@ -28,7 +29,7 @@
 
 ### 环境要求
 
-- Node.js >= 18
+- Node.js >= 24
 - NapCat 客户端已运行并配置好反向 WebSocket 连接（详见NapCat文档）
 
 ### 获取代码与安装依赖
@@ -123,7 +124,19 @@ MEMORY_MIN_SCORE: 0.3,
 
 /** 长期记忆：记忆实体 ID 前缀（后接群号） */
 MEMORY_USER_ID_PREFIX: "SunBot",
+
+/** 长期记忆：用户画像规则 ID（在百炼平台配置） */
+MEMORY_PROFILE_SCHEMA_ID: "your_profile_schema_id",
 ```
+
+`config.js` 中的系统提示词配置（`SYSTEM_PROMPT`）：
+
+系统提示词定义了 AI 的角色、行为约束和输出格式。主要包含：
+- 角色设定（QQ群成员"孙巴二娘"）
+- 行为约束（不编造内容、简短回应、自然发言等）
+- 输出格式要求（JSON 格式，支持分条发送消息）
+
+你可以根据需要修改 `SYSTEM_PROMPT` 来自定义 AI 的人设和行为。
 
 ### 启动
 
@@ -368,6 +381,7 @@ tools.js 中的 callTool() 调度到对应函数
 | 工具名 | 功能 |
 |--------|------|
 | `get_memory` | 根据当前对话内容搜索长期记忆 |
+| `get_profile` | 获取指定 QQ 号用户的画像信息（用户偏好、特征等） |
 | `test_function` | 测试工具，验证工具调用是否正常 |
 
 扩展新工具只需：在 `tools` 数组中添加定义，在 `toolMap` 中注册实现函数。

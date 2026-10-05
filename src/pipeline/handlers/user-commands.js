@@ -1,5 +1,3 @@
-// @ts-check
-
 import { getWeatherText } from "../../services/weather.js";
 import { getModelsText } from "../../services/getModels.js";
 import recorder from "../../llm/recorder.js";
