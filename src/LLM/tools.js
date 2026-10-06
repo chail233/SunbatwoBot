@@ -128,12 +128,7 @@ async function readFile(param) {
     }
 
     try {
-        const content = await fsReadFile(fullPath, "utf-8");
-        const MAX_LEN = 4000;
-        if (content.length > MAX_LEN) {
-            return content.slice(0, MAX_LEN) + "\n\n...[内容过长已截断]";
-        }
-        return content;
+         return await fsReadFile(fullPath, "utf-8");
     }
     catch (err) {
         if (err.code === "ENOENT") return `文件 "${filepath}" 不存在`;
