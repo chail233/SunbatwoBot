@@ -7,6 +7,7 @@ import config from "../config.js";
 import logger from "../utils/logger.js";
 import tools from "./tools.js";
 import {callTool} from "./tools.js";
+import {skills} from "./skill.js";
 
 const SYSTEM_PROMPT = config.SYSTEM_PROMPT;
 
@@ -27,6 +28,7 @@ export default async function chat() {
     // 构造请求消息列表
     const messages = [
         { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: `技能列表：${JSON.stringify(skills)}`},
         ...(chatRecorder.getMidSummary()
             ? [{ role: "system", content: `对话历史概要：${chatRecorder.getMidSummary()}` }]
             : []),

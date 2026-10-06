@@ -164,7 +164,7 @@ export async function callTool(name, parameter){
     if (!tool) {
         throw new Error(`未知工具: ${name}`);
     }
-    return `${name}调用结果：${await tool(parameter)}`;
+    return `${name}调用结果:\n${await tool(parameter)}`;
 }
 
 

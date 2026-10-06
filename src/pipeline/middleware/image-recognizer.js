@@ -32,7 +32,8 @@ export default async function imageRecognizer(ctx) {
                     logger.info("图片识别结果:", reply);
                     description += `\n[发送了图片，内容描述：${reply}]`;
                 }
-            } catch (err) {
+            }
+            catch (err) {
                 logger.error("图片识别失败:", err);
             }
         }
