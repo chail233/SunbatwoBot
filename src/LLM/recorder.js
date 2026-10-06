@@ -3,6 +3,7 @@
 import config from "../config.js";
 import { callLLM } from "./client.js";
 import { addMemory, makeMemoryUserId, extractUserProfile } from "./long-term-memory.js";
+import logger from "../utils/logger.js";
 /**
  * 对话上下文管理器（三层记忆）
  *
@@ -50,8 +51,7 @@ export class ChatRecorder {
     /** 获取所有短期消息的副本（content 序列化为字符串） */
     getAll() {
         return this._messages.map((msg) => {
-            const { content, ...rest } = msg;
-            return { ...rest, content: JSON.stringify(content) };
+            return { role: msg.role, content: JSON.stringify(msg.content) };
         });
     }
 
@@ -76,7 +76,7 @@ export class ChatRecorder {
             ]);
         }
 
-        // 2. 按用户分组提取画像
+        // 2. 提取画像
         await this._extractProfilesFromCache();
 
         // 3. 生成新的概括
@@ -90,7 +90,7 @@ export class ChatRecorder {
             model: config.CHAT_MODEL,
             messages: [
                 {
-                    role: "user",
+                    role: "system",
                     content:
                         "请用中文简要概括以下对话历史中提到的关键信息，包括讨论过的话题、角色的偏好或特征、" +
                         "已作出的决定或承诺等。保持简洁，保留最重要的事实，不要添加原文没有的信息。" +
@@ -115,31 +115,42 @@ export class ChatRecorder {
     }
 
     /**
-     * 从缓存中按用户分组提取画像
-     * 将缓存中的 user 消息按 content.qq（QQ 号）分组，每组单独调用画像提取
+     * 从历史中提取画像
      */
     async _extractProfilesFromCache() {
-        /** @type {Map<string, Array<{role: string, content: string}>>} */
-        const userMessagesMap = new Map();
-
-        for (const msg of this._cache) {
-            if (msg.role === "user" && msg.content?.qq) {
-                const qq = msg.content.qq;
-                if (!userMessagesMap.has(qq)) {
-                    userMessagesMap.set(qq, []);
-                }
-                userMessagesMap.get(qq).push({
+        let userMsgs = "";
+        for(let i=0;i<this._cache.length;i++) {
+            const msg = this._cache[i];
+            userMsgs += `${i+1}.`;
+            userMsgs += JSON.stringify(msg) + "\n";
+        }
+        const result = await callLLM({
+            model: config.CHAT_MODEL,
+            messages: [
+                {
+                    role: "system",
+                    content:
+                        "请从以下对话历史中提取每个用户的关键信息和特征。比如家庭成员、年龄、社会关系、内容偏好、饮食习惯、年龄段、人生理想/目标、性别、爱好、居住地等\n" +
+                        "返回格式必须为JSON，包含一个提取结果的数组，数组每个元素格式如下：\n" +
+                        "{qq: \"用户QQ号\", info: \"提取出来的用户画像信息,用第一人称描述\"}\n" +
+                        "请确保返回的JSON格式正确，并且只包含提取的用户信息，不要其他内容。每个用户信息只放在一个对象里。"
+                },
+                {
                     role: "user",
-                    content: JSON.stringify(msg.content),
-                });
+                    content: userMsgs
+                }
+            ],
+            responseFormat: { type: "json_object" },
+        });
+
+        try {
+            const profiles = JSON.parse(result.message.content);
+            for (const profile of profiles) {
+                await extractUserProfile(profile.qq.toString(), [{role: "user", content: profile.info}]);
             }
         }
-
-        // 对每个用户分别提取画像
-        for (const [qq, msgs] of userMessagesMap) {
-            if (msgs.length > 0) {
-                await extractUserProfile(qq, msgs.slice(-20));
-            }
+        catch (e) {
+            logger.error("用户画像提取失败:", e);
         }
     }
 
