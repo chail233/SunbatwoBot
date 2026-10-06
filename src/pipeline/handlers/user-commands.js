@@ -46,6 +46,19 @@ const cmds = [
         }
     },
     {
+        name: "cmsgs",
+        description: "列出缓存记录",
+        params: [],
+        handler: async (args, ctx)=>{
+            const all = recorder.getCache();
+            if (all.length === 0) return "缓存记录为空";
+            const lines = all.map((m, i) => {
+                return `[${i + 1}] ${m.role}: ${m.content}`;
+            });
+            return `缓存记录共 ${all.length} 条：\n${lines.join("\n")}`;
+        }
+    },
+    {
         name: "sm",
         description: "显示中期记忆概括",
         params: [],
@@ -72,7 +85,7 @@ const cmds = [
         }
     },
     {
-        name: "mls",
+        name: "model",
         description: "查询模型",
         params: [],
         handler: async (args, ctx) => {
@@ -89,7 +102,8 @@ const cmds = [
             config.CHAT_MODEL = args[0];
             return `切换了模型为 ${args[0]}`;
         }
-    }
+    },
+
 ];
 
 const USER_CMD_MAP = new Map(cmds.map(cmd => [cmd.name, cmd.handler]));

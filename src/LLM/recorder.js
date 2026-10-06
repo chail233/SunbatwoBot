@@ -55,6 +55,12 @@ export class ChatRecorder {
         });
     }
 
+    getCache() {
+        return this._cache.map((msg) => {
+            return { role: msg.role, content: JSON.stringify(msg.content) };
+        });
+    }
+
     /** 获取中期概括文本 */
     getMidSummary() {
         return this._midSummary;
