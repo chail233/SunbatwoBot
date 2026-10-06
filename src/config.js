@@ -45,6 +45,8 @@ const baseConfig = {
     /** 和风天气 Key */
     qweatherKEY: "your_qweather_key",
 
+    EnableProactiveChat: true,
+
     // ========== 全局常量 ==========
 
     /** 对话上下文最大记录条数 */

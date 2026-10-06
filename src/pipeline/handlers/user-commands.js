@@ -1,7 +1,6 @@
 import { getWeatherText } from "../../services/weather.js";
 import { getModelsText } from "../../services/getModels.js";
 import recorder from "../../llm/recorder.js";
-import {setting} from "./proactive-chat.js";
 import config from "../../config.js";
 
 const cmds = [
@@ -63,10 +62,11 @@ const cmds = [
         handler: async (args, ctx) => {
             if (args.length === 0) return "缺少参数 true/false";
             if (args[0] === "true") {
-                setting.enable = true;
+                config.EnableProactiveChat = true;
                 return "开启了主动回复";
-            } else {
-                setting.enable = false;
+            }
+            else {
+                config.EnableProactiveChat = false;
                 return "关闭了主动回复";
             }
         }

@@ -11,17 +11,12 @@ import { formatTime } from "../../utils/time.js";
  * 当群内连续若干条消息无 AI 参与时，主动触发一次对话
  */
 
-/** 无 AI 参与的消息计数 */
-export let setting = {
-    enable: true,
-}
-
 /**
  * @param {object} ctx
  * @returns {Promise<boolean>}
  */
 export default async function proactiveChat(ctx) {
-    if(!setting.enable) return false;
+    if(!config.EnableProactiveChat) return false;
     const text = ctx.text + (ctx.imageDescription ? `\n${ctx.imageDescription}` : "");
     recorder.add({
         role: "user",
