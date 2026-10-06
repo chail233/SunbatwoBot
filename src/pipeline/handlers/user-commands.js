@@ -2,6 +2,7 @@ import { getWeatherText } from "../../services/weather.js";
 import { getModelsText } from "../../services/getModels.js";
 import recorder from "../../llm/recorder.js";
 import config from "../../config.js";
+import {skills} from "../../llm/skill.js";
 
 const cmds = [
     {
@@ -103,7 +104,14 @@ const cmds = [
             return `切换了模型为 ${args[0]}`;
         }
     },
-
+    {
+        name: "skills",
+        description: "列出技能列表",
+        params: [],
+        handler: async (args, ctx) => {
+            return "技能列表：\n" + skills.map(skill => skill.name).join("\n");
+        }
+    }
 ];
 
 const USER_CMD_MAP = new Map(cmds.map(cmd => [cmd.name, cmd.handler]));
