@@ -97,6 +97,12 @@ const baseConfig = {
     /** 长期记忆：用户画像规则 ID */
     MEMORY_PROFILE_SCHEMA_ID: "your_profile_schema_id",
 
+    /**
+     * 文件读取工具白名单
+     * 只允许读取 src/ 下这些子目录中的文件
+     */
+    readFileDirs: ["skills", "workspace"],
+
     // ========== 成员映射 ==========
 
     /**

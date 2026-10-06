@@ -2,6 +2,9 @@ import chatRecorder from "./recorder.js";
 import {makeMemoryUserId, searchMemory, getUserProfile} from "./long-term-memory.js";
 import config from "../config.js";
 import logger from "../utils/logger.js";
+import { readFile as fsReadFile } from "node:fs/promises";
+import { resolve, dirname, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /**
  *模型可以调用的工具
@@ -37,6 +40,23 @@ const tools = [
                     },
                 },
                 required: ["qq"],
+            },
+        },
+    },
+    {
+        type: "function",
+        function: {
+            name: "read_file",
+            description: "读取指定路径的文件内容",
+            parameters: {
+                type: "object",
+                properties: {
+                    filepath: {
+                        type: "string",
+                        description: "相对于 src/ 目录的文件路径",
+                    },
+                },
+                required: ["filepath"],
             },
         },
     }
@@ -82,12 +102,54 @@ async function getUserProfileTool(param) {
 }
 
 
+async function readFile(param) {
+    const filepath = param?.filepath;
+    if (!filepath) return "缺少文件路径参数";
+
+    // 基准路径：src/（tools.js 在 src/llm/，回退一级到 src/）
+    const srcDir = dirname(fileURLToPath(import.meta.url));
+    const baseDir = resolve(srcDir, "..");
+    const fullPath = resolve(baseDir, filepath);
+
+    // 路径穿越防护
+    if (fullPath !== baseDir && !fullPath.startsWith(baseDir + sep)) {
+        return "非法路径，禁止访问上级目录";
+    }
+
+    // 白名单校验
+    const whitelist = config.readFileDirs || [];
+    const allowed = whitelist.some(dir => {
+        const allowedDir = resolve(baseDir, dir);
+        return fullPath === allowedDir || fullPath.startsWith(allowedDir + sep);
+    });
+
+    if (!allowed) {
+        return `无权访问该路径，仅允许读取以下目录：${whitelist.join(", ")}`;
+    }
+
+    try {
+        const content = await fsReadFile(fullPath, "utf-8");
+        const MAX_LEN = 4000;
+        if (content.length > MAX_LEN) {
+            return content.slice(0, MAX_LEN) + "\n\n...[内容过长已截断]";
+        }
+        return content;
+    }
+    catch (err) {
+        if (err.code === "ENOENT") return `文件 "${filepath}" 不存在`;
+        return `读取文件失败: ${err.message}`;
+    }
+}
+
+
+
 
 const toolMap = new Map(
     [
         ["test_function", testTool],
         ["get_memory", getMemory],
         ["get_user_profile", getUserProfileTool],
+        ["read_file", readFile],
     ]
 );
 
@@ -104,3 +166,5 @@ export async function callTool(name, parameter){
     }
     return await tool(parameter);
 }
+
+
