@@ -150,7 +150,12 @@ export class ChatRecorder {
         });
 
         try {
+
             const profiles = JSON.parse(result.message.content);
+            if (!Array.isArray(profiles)) {
+                logger.warn("提取的画像不是数组格式:", result.message.content);
+                return;
+            }
             for (const profile of profiles) {
                 await extractUserProfile(profile.qq.toString(), [{role: "user", content: profile.info}]);
             }
