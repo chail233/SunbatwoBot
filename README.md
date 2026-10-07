@@ -22,6 +22,7 @@
 - **工具调用（Function Calling）**（AI 可自主判断并调用工具，如检索长期记忆）
 - **长期记忆**（基于阿里云百炼记忆库，通过工具调用自动存储和召回对话历史中的关键信息）
 - **用户画像**（基于阿里云百炼记忆库画像模板，自动提取并存储用户偏好和特征）
+- **Skill 技能系统**（可从 GitHub 安装/卸载技能，AI 通过工具调用读取和执行 Skill 脚本）
 
 你可以快速地配置并使用该项目，或者扩展开发自己想要的功能。
 
@@ -68,6 +69,9 @@ const configDev = {
 
     /** 和风天气 Key */
     qweatherKEY: "your_key_here",
+
+    /** GitHub Token（可选，用于技能管理功能） */
+    githubToken: "ghp_xxx",
 
     /** QQ 号 → 群昵称 映射表 */
     members: new Map([
@@ -127,6 +131,15 @@ MEMORY_USER_ID_PREFIX: "SunBot",
 
 /** 长期记忆：用户画像规则 ID（在百炼平台配置） */
 MEMORY_PROFILE_SCHEMA_ID: "your_profile_schema_id",
+
+/** 文件读取工具白名单目录 */
+readFileDirs: ["skills", "workspace"],
+
+/** JS 脚本执行白名单目录 */
+runJsDirs: ["skills", "workspace"],
+
+/** GitHub Token（可选，用于访问 GitHub API） */
+githubToken: null,
 ```
 
 `config.js` 中的系统提示词配置（`SYSTEM_PROMPT`）：
@@ -184,6 +197,7 @@ src/
 │   ├── client.js               # 统一 API 客户端（axios 封装）
 │   ├── chat.js                 # 对话 API（含系统提示词 + 工具调用循环）
 │   ├── tools.js                # 工具定义与调度（Function Calling）
+│   ├── skill.js                # Skill 加载器（扫描 skills 目录，解析元数据）
 │   ├── image.js                # 识图 API
 │   ├── long-term-memory.js     # 阿里云百炼长期记忆 API 封装
 │   └── recorder.js             # 对话上下文管理器（含长期记忆同步）
@@ -201,11 +215,17 @@ src/
 ├── tools/                      # 工具函数
 │   ├── repeater.js             # 复读检测算法
 │
+├── skills/                     # Skill 技能目录（AI 可读写）
+│   └── skill-manager/          # 内置技能：技能管理器
+│
+├── workspace/                  # 工作区目录（AI 可读写）
+│
 └── utils/                      # 通用工具
     ├── logger.js               # 统一日志（带时间戳）
     ├── sleep.js                # 延迟
     ├── random.js               # 随机整数
     ├── queue.js                # 队列数据结构
+    ├── time.js                 # 时间处理
     └── image-type.js           # 图片格式检测（文件头魔数）
 ```
 
@@ -311,16 +331,47 @@ CMD_MAP.set("你的关键词", async (ctx) => {
 });
 ```
 
+**当前可用关键词：**
+
+| 关键词 | 功能 |
+|--------|------|
+| `来句台词` | 获取一言动漫台词 |
+| `来张图` | 获取 ACG 图片 |
+| `来只孙巴二娘` | 获取孙巴二娘图片 |
+| `来只牛魔` | 获取牛魔图片 |
+
 #### 添加用户命令（# 前缀）
 
-在 `pipeline/handlers/user-commands.js` 的 `USER_CMD_MAP` 中添加：
+在 `pipeline/handlers/user-commands.js` 的 `cmds` 数组中添加：
 
 ```js
-USER_CMD_MAP.set("命令名", async (args) => {
-    // args 是命令参数数组
-    return "回复文本";
-});
+{
+    name: "命令名",
+    description: "命令描述",
+    params: [{ name: "参数名", desc: "参数说明" }],  // 无参数则为空数组
+    handler: async (args, ctx) => {
+        // args 是命令参数数组
+        // ctx 是管道上下文
+        return "回复文本";
+    }
+}
 ```
+
+**当前可用命令：**
+
+| 命令 | 说明 | 参数 | 权限 |
+|------|------|------|------|
+| `#gw <城市>` | 查询天气 | 城市名称 | 无 |
+| `#clear` | 清除短期记忆 | 无 | 管理员 |
+| `#help` | 显示指令列表 | 无 | 无 |
+| `#msgs` | 列出短期记录 | 无 | 无 |
+| `#cmsgs` | 列出缓存记录 | 无 | 无 |
+| `#sm` | 显示中期记忆概括 | 无 | 无 |
+| `#pchat <true/false>` | 开启/关闭主动回复 | 开关 | 无 |
+| `#model` | 查询可用模型 | 无 | 无 |
+| `#ms <模型名>` | 设置文本模型 | 模型ID | 管理员 |
+| `#skills` | 列出已安装技能 | 无 | 无 |
+| `#reloadskls` | 重新加载技能 | 无 | 管理员 |
 
 #### 添加新中间件
 
@@ -381,10 +432,54 @@ tools.js 中的 callTool() 调度到对应函数
 | 工具名 | 功能 |
 |--------|------|
 | `get_memory` | 根据当前对话内容搜索长期记忆 |
-| `get_profile` | 获取指定 QQ 号用户的画像信息（用户偏好、特征等） |
-| `test_function` | 测试工具，验证工具调用是否正常 |
+| `get_user_profile` | 获取指定 QQ 号用户的画像信息（用户偏好、特征等） |
+| `read_file` | 读取指定路径的文件（白名单限制：`skills/`、`workspace/`） |
+| `run_JS` | 运行 JavaScript 脚本（白名单限制：`skills/`、`workspace/`），支持传递参数 |
 
 扩展新工具只需：在 `tools` 数组中添加定义，在 `toolMap` 中注册实现函数。
+
+### Skill 技能系统
+
+项目支持通过 Skill 机制扩展 AI 能力。Skill 是包含 `SKILL.md` 描述文件的目录，可包含脚本供 AI 调用。
+
+**目录结构：**
+```
+skills/
+└── your-skill/
+    ├── SKILL.md        # 技能元数据（name、description、命令说明）
+    └── scripts/        # 技能脚本
+        └── your-script.js
+```
+
+**SKILL.md 格式：**
+```markdown
+---
+name: your-skill
+description: 技能描述
+---
+
+# 技能名称
+
+技能详细说明...
+
+## 可用命令
+
+### 1. 命令名称
+
+filepath: scripts/your-script.js
+args: { "param": "参数说明" }
+```
+
+**内置技能：skill-manager**
+
+用于管理技能的安装和卸载：
+- `install` — 从 GitHub 仓库安装技能
+- `uninstall` — 卸载本地技能
+
+**安全机制：**
+- AI 只能读取和执行 `skills/` 和 `workspace/` 目录下的文件
+- 脚本在子进程中执行，有 30 秒超时限制
+- 参数通过 `process.argv[2]` 以 JSON 字符串形式传递
 
 ---
 
@@ -420,17 +515,58 @@ index.js
             │                      ── services/hitokoto.js
             │                      ── data/sunbatwo-girls.js
             │                      ── llm/recorder.js
+            │                      ── utils/time.js
             ├─ user-commands.js ── services/weather.js
             │                    ── services/getModels.js
+            │                    ── llm/skill.js
             ├─ ai-chat.js ── llm/chat.js ──┬── llm/client.js
-            │              │               ├── llm/recorder.js
-            │              │               └── llm/tools.js ── llm/long-term-memory.js
-            │              └── llm/recorder.js
+            │             │               ├── llm/recorder.js
+            │             │               ├── llm/tools.js ── llm/long-term-memory.js
+            │             │               └── llm/skill.js
+            │             ├── llm/recorder.js
+            │             └── utils/time.js
             ├─ repeater.js ── tools/repeater.js ── utils/queue.js
             └─ proactive-chat.js ── llm/chat.js ──┬── llm/client.js
                                                   ├── llm/recorder.js
-                                                  └── llm/tools.js
+                                                  ├── llm/tools.js
+                                                  ├── llm/skill.js
+                                                  └── utils/time.js
 ```
+
+---
+
+## Skill 开发指南
+
+### 创建新 Skill
+
+1. 在 `src/skills/` 下创建目录，如 `my-skill/`
+2. 创建 `SKILL.md` 描述文件，包含 frontmatter 元数据
+3. 在 `scripts/` 子目录中编写 JS 脚本
+
+### 脚本规范
+
+- 脚本通过 `process.argv[2]` 接收 JSON 格式参数
+- 结果通过 `console.log()` 输出
+- 执行超时限制 30 秒
+- 错误信息通过 `stderr` 或抛出异常传递
+
+**示例脚本：**
+```js
+// skills/my-skill/scripts/hello.js
+const args = JSON.parse(process.argv[2] || '{}');
+const name = args.name || 'World';
+console.log(`Hello, ${name}!`);
+```
+
+### 安装社区 Skill
+
+AI 可通过内置的 `skill-manager` 技能从 GitHub 安装社区技能：
+
+```
+从 GitHub 仓库 owner/repo 安装技能
+```
+
+AI 会自动调用 `run_JS` 工具执行安装脚本。
 
 ---
 
