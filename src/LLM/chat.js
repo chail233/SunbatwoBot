@@ -54,7 +54,7 @@ export default async function chat() {
 
     let toolDepth = 0;
     tokenCount += result.totalTokens;
-    while (result?.message?.tool_calls && toolDepth < 10){
+    while (result?.message?.tool_calls && toolDepth <= config.TOOLCHAIN_MAX_LENGTH){
         toolDepth++;
         for(const tool_call of result.message.tool_calls){
             try {

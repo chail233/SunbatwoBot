@@ -165,6 +165,15 @@ export class ChatRecorder {
         }
     }
 
+    async compress(){
+        if(this._messages.length>=10){
+            this._cache = this._cache.concat(this._messages);
+            this._messages = [];
+        }
+        this._needsSummarization = true;
+        await this.summarizeCache();
+    }
+
     /** 清空所有记忆（短期、缓存、概括） */
     clear() {
         this._messages = [];

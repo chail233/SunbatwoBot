@@ -123,6 +123,33 @@ const cmds = [
             return "已更新，技能列表：\n" + skills.map(skill => skill.name).join("\n");
         }
     },
+    {
+        name: "compress",
+        description: "压缩短期记忆（管理员）",
+        params: [],
+        handler: async (args, ctx) => {
+            if (!ctx.isAdmin) return "无权限";
+            const cnt = recorder.compress();
+            return `压缩完成`;
+        }
+    },
+    {
+        name: "agent",
+        description: "agent模式开关(管理员)",
+        params: [{ name: "开关", desc: "true/false" }],
+        handler: async (args, ctx) => {
+            if (!ctx.isAdmin) return "无权限";
+            if (args.length === 0) return "缺少参数 true/false";
+            if (args[0] === "true") {
+                config.DevMode = true;
+                return "开启了agent模式";
+            }
+            else {
+                config.DevMode = false;
+                return "关闭了agent模式";
+            }
+        }
+    }
 ];
 
 const USER_CMD_MAP = new Map(cmds.map(cmd => [cmd.name, cmd.handler]));

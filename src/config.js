@@ -91,6 +91,9 @@ const baseConfig = {
     /** 长期记忆搜索：最小相似度阈值 */
     MEMORY_MIN_SCORE: 0.3,
 
+    /** 工具链最大长度 */
+    TOOLCHAIN_MAX_LENGTH: 15,
+
     /** 长期记忆：记忆实体 ID 前缀（后接群号） */
     MEMORY_USER_ID_PREFIX: "SunBot",
 
@@ -119,6 +122,9 @@ const baseConfig = {
      * GitHub Token，用于访问 GitHub API
      */
     githubToken: null,
+
+    /** Agent模式 */
+    agentMode: false,
 
     // ========== 成员映射 ==========
 
