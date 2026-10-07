@@ -3,6 +3,7 @@ import { getModelsText } from "../../services/getModels.js";
 import recorder from "../../llm/recorder.js";
 import config from "../../config.js";
 import {skills} from "../../llm/skill.js";
+import {reloadSkills} from "../../llm/skill.js";
 
 const cmds = [
     {
@@ -111,7 +112,16 @@ const cmds = [
         handler: async (args, ctx) => {
             return "技能列表：\n" + skills.map(skill => skill.name).join("\n");
         }
-    }
+    },
+    {
+        name: "reloadskls",
+        description: "重新加载技能",
+        params: [],
+        handler: async (args, ctx) => {
+            await reloadSkills();
+            return "已更新，技能列表：\n" + skills.map(skill => skill.name).join("\n");
+        }
+    },
 ];
 
 const USER_CMD_MAP = new Map(cmds.map(cmd => [cmd.name, cmd.handler]));

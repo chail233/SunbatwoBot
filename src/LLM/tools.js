@@ -201,8 +201,13 @@ async function runJS(param) {
         const args = param?.args ?? {};
         const argsJson = JSON.stringify(args);
 
+        // --use-system-ca 仅在 Windows 上需要，用于使用系统证书存储解决 SSL 问题
+        const nodeArgs = process.platform === "win32"
+            ? ["--use-system-ca", fullPath, argsJson]
+            : [fullPath, argsJson];
+
         const { stdout, stderr } = await new Promise((resolve, reject) => {
-            execFile(process.execPath, [fullPath, argsJson], { timeout: 30000 }, (error, stdout, stderr) => {
+            execFile(process.execPath, nodeArgs, { timeout: 30000 }, (error, stdout, stderr) => {
                 if (error) {
                     if (stderr) reject(new Error(stderr.trim()));
                     else reject(error);

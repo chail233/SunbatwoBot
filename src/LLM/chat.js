@@ -44,13 +44,15 @@ export default async function chat() {
         tools: tools,
     });
 
+    let tokenCount = 0;
+
     if (!result || typeof result === "string") {
         return typeof result === "string" ? "ERROR:" + result : "ERROR:AI 服务无响应";
     }
 
 
     let toolDepth = 0;
-
+    tokenCount += result.totalTokens;
     while (result?.message?.tool_calls && toolDepth < 10){
         toolDepth++;
         for(const tool_call of result.message.tool_calls){
@@ -87,6 +89,7 @@ export default async function chat() {
         if (typeof result === "string") {
             return "ERROR:"+result;
         }
+        tokenCount += result.totalTokens;
     }
 
     logger.info("AI 消息数组内容:", result.message.content);
@@ -107,6 +110,6 @@ export default async function chat() {
 
     return {
         acts: parsed.action??[],
-        tokens: result.totalTokens,
+        tokens: tokenCount,
     };
 }

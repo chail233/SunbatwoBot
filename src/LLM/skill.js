@@ -63,3 +63,7 @@ async function loadSkills() {
     }
     return result;
 }
+
+export async function reloadSkills(){
+    skills = await loadSkills();
+}

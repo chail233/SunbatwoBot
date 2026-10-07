@@ -109,6 +109,11 @@ const baseConfig = {
      */
     runJsDirs: ["skills", "workspace"],
 
+    /**
+     * GitHub Token，用于访问 GitHub API
+     */
+    githubToken: null,
+
     // ========== 成员映射 ==========
 
     /**
