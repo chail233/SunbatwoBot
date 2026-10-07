@@ -70,6 +70,7 @@ export default async function chat() {
         // 重建消息列表
         const updatedMessages = [
             { role: "system", content: SYSTEM_PROMPT },
+            { role: "system", content: `技能列表：${JSON.stringify(skills)}`},
             ...(chatRecorder.getMidSummary()
                 ? [{ role: "system", content: `对话历史概要：${chatRecorder.getMidSummary()}` }]
                 : []),
