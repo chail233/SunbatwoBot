@@ -1,8 +1,5 @@
-// @ts-check
-
 /**
  * 卸载 Skill
- * 通过 run_JS 工具在子进程中执行
  *
  * 删除本地 skills 目录中的技能
  * 参数: { name: string } — 技能名称（目录名）

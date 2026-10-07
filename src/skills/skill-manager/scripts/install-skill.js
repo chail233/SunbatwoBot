@@ -1,8 +1,5 @@
-// @ts-check
-
 /**
  * 安装 Skill
- * 通过 run_JS 工具在子进程中执行
  *
  * 从 GitHub 仓库下载 Skill 到本地 skills 目录
  * 参数: { repo: string } — 仓库地址（如 "owner/repo" 或 "https://github.com/owner/repo"）

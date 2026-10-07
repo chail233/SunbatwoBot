@@ -23,7 +23,6 @@ const SKILLS_DIR = resolve(__dirname, "..", "..");
 
 /**
  * 获取 GitHub Token
- * 设计意图：认证后 API 限额从 60次/小时 提升到 5000次/小时
  * 从 config.githubToken 读取
  * @returns {string|undefined}
  */
@@ -222,7 +221,6 @@ async function getAllFiles(owner, repo, path) {
 
 /**
  * 安装 Skill
- * 设计意图：从 GitHub 仓库下载 Skill 到本地 skills 目录
  * @param {string} repoUrl 仓库地址
  * @returns {Promise<{name: string, description: string, path: string}>}
  */
@@ -279,7 +277,6 @@ export async function installSkill(repoUrl) {
 
 /**
  * 卸载 Skill
- * 设计意图：删除本地 skills 目录中的技能
  * @param {string} skillName 技能名称（目录名）
  * @returns {{name: string, path: string}}
  */
@@ -297,32 +294,4 @@ export function uninstallSkill(skillName) {
         name: skillName,
         path: skillPath,
     };
-}
-
-/**
- * 列出已安装的 Skill
- * @returns {Array<{name: string, path: string}>}
- */
-export function listInstalledSkills() {
-    if (!existsSync(SKILLS_DIR)) {
-        return [];
-    }
-
-    const skills = [];
-    const entries = readdirSync(SKILLS_DIR, { withFileTypes: true });
-
-    for (const entry of entries) {
-        if (entry.isDirectory() && entry.name !== "skill-manager") {
-            const skillDir = join(SKILLS_DIR, entry.name);
-            const skillMdPath = join(skillDir, "SKILL.md");
-            if (existsSync(skillMdPath)) {
-                skills.push({
-                    name: entry.name,
-                    path: skillDir,
-                });
-            }
-        }
-    }
-
-    return skills;
 }
