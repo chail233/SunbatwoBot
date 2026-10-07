@@ -6,8 +6,8 @@ import { fileURLToPath } from "node:url";
  * 封装路径解析、穿越防护和白名单校验，供 LLM 工具统一调用
  */
 
-/** src/ 目录的绝对路径（file-security.js 在 src/utils/，回退两级到 src/） */
-const baseDir = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+/** src/ 目录的绝对路径（file-security.js 在 src/utils/，回退一级到 src/） */
+const baseDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 /**
  * 将相对于 src/ 的路径解析为绝对路径，并检查路径穿越
