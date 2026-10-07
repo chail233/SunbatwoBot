@@ -2,8 +2,8 @@ import chatRecorder from "./recorder.js";
 import {makeMemoryUserId, searchMemory, getUserProfile} from "./long-term-memory.js";
 import config from "../config.js";
 import logger from "../utils/logger.js";
-import { readFile as fsReadFile, writeFile as fsWriteFile, mkdir, rm } from "node:fs/promises";
-import { dirname, extname } from "node:path";
+import { readFile as fsReadFile, writeFile as fsWriteFile, mkdir, rm, readdir, stat } from "node:fs/promises";
+import { dirname, extname, resolve } from "node:path";
 import { execFile } from "node:child_process";
 import { resolveSrcPath, checkPathWhitelist } from "../utils/file-security.js";
 import {sendGroupMsg} from "../bot/actions.js";
@@ -110,6 +110,23 @@ const tools = [
                     },
                 },
                 required: ["filepath"],
+            },
+        },
+    },
+    {
+        type: "function",
+        function: {
+            name: "list_files",
+            description: "列出指定目录下的文件和子目录",
+            parameters: {
+                type: "object",
+                properties: {
+                    dirpath: {
+                        type: "string",
+                        description: "相对于 src/ 的目录路径",
+                    },
+                },
+                required: ["dirpath"],
             },
         },
     },
@@ -399,6 +416,49 @@ async function editFile(param) {
 }
 
 
+/**
+ * 列出指定目录下的文件和子目录
+ * 安全策略：路径穿越防护 + 白名单校验
+ * @param {{dirpath: string}} param
+ */
+async function listFiles(param) {
+    const dirpath = param?.dirpath;
+    if (!dirpath) return "缺少目录路径参数";
+
+    const pathResult = resolveSrcPath(dirpath);
+    if (pathResult.error) return pathResult.error;
+
+    const whitelistResult = checkPathWhitelist(pathResult.fullPath, config.readFileDirs || [], "列出文件");
+    if (whitelistResult.error) return whitelistResult.error;
+
+    if (config.agentMode) sendGroupMsg(config.targetGroupId, `查看目录${dirpath}...`);
+    try {
+        const entries = await readdir(pathResult.fullPath);
+        if (entries.length === 0) return `目录 "${dirpath}" 为空`;
+
+        // 获取每个条目的类型信息
+        const details = await Promise.all(
+            entries.map(async (name) => {
+                try {
+                    const s = await stat(resolve(pathResult.fullPath, name));
+                    return s.isDirectory() ? `${name}/` : name;
+                }
+                catch {
+                    return name;
+                }
+            })
+        );
+
+        return details.join("\n");
+    }
+    catch (err) {
+        if (err.code === "ENOENT") return `目录 "${dirpath}" 不存在`;
+        if (err.code === "ENOTDIR") return `"${dirpath}" 不是目录`;
+        return `列出目录失败: ${err.message}`;
+    }
+}
+
+
 const toolMap = new Map(
     [
         ["get_memory", getMemory],
@@ -408,6 +468,7 @@ const toolMap = new Map(
         ["edit_file", editFile],
         ["create_file", createFile],
         ["delete_file", deleteFile],
+        ["list_files", listFiles],
     ]
 );
 
