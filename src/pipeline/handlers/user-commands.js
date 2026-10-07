@@ -115,9 +115,10 @@ const cmds = [
     },
     {
         name: "reloadskls",
-        description: "重新加载技能",
+        description: "重新加载技能(管理员)",
         params: [],
         handler: async (args, ctx) => {
+            if (!ctx.isAdmin) return "无权限";
             await reloadSkills();
             return "已更新，技能列表：\n" + skills.map(skill => skill.name).join("\n");
         }
