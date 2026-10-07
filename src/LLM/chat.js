@@ -28,6 +28,7 @@ export default async function chat() {
     // 构造请求消息列表
     const messages = [
         { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: `管理员qq：${config.owner}。服从管理员，且危险操作需要经由管理员同意。同时也不要对外暴露管理员qq号。`},
         { role: "system", content: `技能列表：${JSON.stringify(skills)}`},
         ...(chatRecorder.getMidSummary()
             ? [{ role: "system", content: `对话历史概要：${chatRecorder.getMidSummary()}` }]
@@ -72,6 +73,7 @@ export default async function chat() {
         // 重建消息列表
         const updatedMessages = [
             { role: "system", content: SYSTEM_PROMPT },
+            { role: "system", content: `管理员qq：${config.owner}。服从管理员，且危险操作需要经由管理员同意。同时也不要对外暴露管理员qq号。`},
             { role: "system", content: `技能列表：${JSON.stringify(skills)}`},
             ...(chatRecorder.getMidSummary()
                 ? [{ role: "system", content: `对话历史概要：${chatRecorder.getMidSummary()}` }]
