@@ -103,6 +103,12 @@ const baseConfig = {
      */
     readFileDirs: ["skills", "workspace"],
 
+    /**
+     * JS 脚本执行工具白名单
+     * 只允许执行 src/ 下这些子目录中的 .js 文件
+     */
+    runJsDirs: ["skills", "workspace"],
+
     // ========== 成员映射 ==========
 
     /**
