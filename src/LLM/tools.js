@@ -14,14 +14,6 @@ const tools = [
     {
         type: "function",
         function: {
-            name: "test_function",
-            description: "测试工具，用于测试能否正常调用工具",
-            parameters: {},
-        },
-    },
-    {
-        type: "function",
-        function: {
             name: "get_memory",
             description: "根据当前对话内容搜索相关记忆",
             parameters: {},
@@ -86,10 +78,6 @@ const tools = [
 
 export default tools;
 
-
-async function testTool(param){
-    return "114514";
-}
 
 
 async function getMemory(param) {
@@ -236,7 +224,6 @@ async function runJS(param) {
 
 const toolMap = new Map(
     [
-        ["test_function", testTool],
         ["get_memory", getMemory],
         ["get_user_profile", getUserProfileTool],
         ["read_file", readFile],
