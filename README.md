@@ -138,8 +138,17 @@ readFileDirs: ["skills", "workspace"],
 /** JS 脚本执行白名单目录 */
 runJsDirs: ["skills", "workspace"],
 
+/** 文件编辑工具白名单目录 */
+editFileDirs: ["skills", "workspace"],
+
 /** GitHub Token（可选，用于访问 GitHub API） */
 githubToken: null,
+
+/** Agent模式（开启后工具调用时会发送提示信息） */
+agentMode: false,
+
+/** 工具链最大长度（单次对话中工具调用次数上限） */
+TOOLCHAIN_MAX_LENGTH: 15,
 ```
 
 `config.js` 中的系统提示词配置（`SYSTEM_PROMPT`）：
@@ -372,6 +381,8 @@ CMD_MAP.set("你的关键词", async (ctx) => {
 | `#ms <模型名>` | 设置文本模型 | 模型ID | 管理员 |
 | `#skills` | 列出已安装技能 | 无 | 无 |
 | `#reloadskls` | 重新加载技能 | 无 | 管理员 |
+| `#compress` | 压缩短期记忆 | 无 | 管理员 |
+| `#agent <true/false>` | 开启/关闭 Agent 模式 | 开关 | 管理员 |
 
 #### 添加新中间件
 
@@ -435,6 +446,10 @@ tools.js 中的 callTool() 调度到对应函数
 | `get_user_profile` | 获取指定 QQ 号用户的画像信息（用户偏好、特征等） |
 | `read_file` | 读取指定路径的文件（白名单限制：`skills/`、`workspace/`） |
 | `run_JS` | 运行 JavaScript 脚本（白名单限制：`skills/`、`workspace/`），支持传递参数 |
+| `create_file` | 在指定路径创建新文件（禁止覆盖已有文件，白名单限制） |
+| `delete_file` | 删除指定路径的文件（白名单限制） |
+| `edit_file` | 通过搜索替换的方式编辑文件内容（白名单限制） |
+| `list_files` | 列出指定目录下的文件和子目录（白名单限制） |
 
 扩展新工具只需：在 `tools` 数组中添加定义，在 `toolMap` 中注册实现函数。
 
