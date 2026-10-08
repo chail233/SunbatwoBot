@@ -1,5 +1,6 @@
 import {StdioClientTransport} from "@modelcontextprotocol/client/stdio";
 import {Client, StreamableHTTPClientTransport} from "@modelcontextprotocol/client";
+import {SSEClientTransport} from "@modelcontextprotocol/sdk/client/sse.js";
 import logger from "../utils/logger.js";
 import config from "../config.js";
 
@@ -21,6 +22,15 @@ class McpConnection{
                     args:this.config.args ?? [],
                 }
             );
+        }
+        else if(transportType==="old_sse"){
+            const transportOptions = {};
+            if (this.config.headers) {
+                transportOptions.requestInit = {
+                    headers: this.config.headers,
+                };
+            }
+            transport = new SSEClientTransport(new URL(this.config.url), transportOptions);
         }
         else if(transportType==="sse"){
             const transportOptions = {};

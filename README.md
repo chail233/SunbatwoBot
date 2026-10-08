@@ -23,6 +23,7 @@
 - **长期记忆**（基于阿里云百炼记忆库，通过工具调用自动存储和召回对话历史中的关键信息）
 - **用户画像**（基于阿里云百炼记忆库画像模板，自动提取并存储用户偏好和特征）
 - **Skill 技能系统**（可从 GitHub 安装/卸载技能，AI 通过工具调用读取和执行 Skill 脚本）
+- **MCP 工具扩展**（连接外部 MCP Server，动态加载远程工具，支持 stdio / SSE / Streamable HTTP 三种传输协议）
 
 你可以快速地配置并使用该项目，或者扩展开发自己想要的功能。
 
@@ -205,7 +206,8 @@ src/
 ├── llm/                        # AI 语言模型层
 │   ├── client.js               # 统一 API 客户端（axios 封装）
 │   ├── chat.js                 # 对话 API（含系统提示词 + 工具调用循环）
-│   ├── tools.js                # 工具定义与调度（Function Calling）
+│   ├── tools.js                # 工具定义与调度（Function Calling + MCP 路由）
+│   ├── mcp-client.js           # MCP 客户端管理器（连接外部 Server，加载远程工具）
 │   ├── skill.js                # Skill 加载器（扫描 skills 目录，解析元数据）
 │   ├── image.js                # 识图 API
 │   ├── long-term-memory.js     # 阿里云百炼长期记忆 API 封装
@@ -450,8 +452,87 @@ tools.js 中的 callTool() 调度到对应函数
 | `delete_file` | 删除指定路径的文件（白名单限制） |
 | `edit_file` | 通过搜索替换的方式编辑文件内容（白名单限制） |
 | `list_files` | 列出指定目录下的文件和子目录（白名单限制） |
+| `mcp_*` | 外部 MCP Server 提供的工具（自动加 `mcp_` 前缀，运行时动态注册） |
 
-扩展新工具只需：在 `tools` 数组中添加定义，在 `toolMap` 中注册实现函数。
+扩展新工具只需：在 `tools` 数组中添加定义，在 `toolMap` 中注册实现函数。连接外部 MCP Server 则只需在 `config.js` 的 `mcpServers` 中添加配置。
+
+### MCP 工具扩展
+
+项目支持连接外部 MCP（Model Context Protocol）Server，将远程工具动态注册到 AI 的工具列表中。MCP 工具名称以 `mcp_` 前缀自动注册（如远程工具 `fetch` 会注册为 `mcp_fetch`）。
+
+**支持的传输协议：**
+
+| transport | 协议 | 适用场景 | 配置项 |
+|-----------|------|---------|--------|
+| `stdio` | 本地子进程 | 本地 MCP Server（如 filesystem） | `command`, `args` |
+| `sse` | 旧版 SSE | 阿里云百炼等 `/sse` 端点 | `url`, `headers` |
+| `streamableHttp` | 新版 Streamable HTTP | 标准 MCP `/mcp` 端点 | `url`, `headers` |
+
+**配置示例（`configDev.js`）：**
+
+```js
+mcpServers: [
+    // 旧版 SSE
+    {
+        name: "",
+        transport: "old_sse",
+        url: "https://example.com/sse",
+        headers: {
+            Authorization: "Bearer ",
+        },
+    },
+    // 新版 
+    {
+        name: "remote-tools",
+        transport: "sse",
+        url: "https://example.com/mcp",
+        headers: {
+            Authorization: "Bearer token",
+        },
+    },
+    // 本地 stdio
+    {
+        name: "filesystem",
+        transport: "stdio",
+        command: "npx",
+        args: ["-y", "@modelcontextprotocol/server-filesystem", "D:/allowed/path"],
+    },
+],
+```
+
+**依赖安装：**
+
+```bash
+# MCP 客户端 SDK（必需）
+npm install @modelcontextprotocol/client
+
+# 旧版 SSE 传输支持（使用 sse 协议时需要）
+npm install @modelcontextprotocol/sdk
+```
+
+**工作流程：**
+
+```
+Bot 启动 → mcpClient.init()
+    │
+    ├─ 遍历 mcpServers 配置
+    ├─ 按 transport 类型创建连接（stdio / sse / old_sse）
+    ├─ 完成 MCP 协议握手
+    ├─ 获取每个 Server 的工具列表
+    └─ 注册到 toolServerMap（工具名 → Server 名映射）
+
+AI 对话时 → getAllTools()
+    │
+    ├─ 本地工具（tools.js 中定义）
+    └─ MCP 工具（mcpClient.getToolDefinition()）
+         └─ 名称自动加 mcp_ 前缀
+
+AI 调用 mcp_xxx 工具 → callTool()
+    │
+    ├─ 识别 mcp_ 前缀，去掉前缀得到原始工具名
+    ├─ 通过 toolServerMap 找到对应的 Server 连接
+    └─ 调用 connection.callTool() 转发到远程 Server
+```
 
 ### Skill 技能系统
 
@@ -536,14 +617,16 @@ index.js
             │                    ── llm/skill.js
             ├─ ai-chat.js ── llm/chat.js ──┬── llm/client.js
             │             │               ├── llm/recorder.js
-            │             │               ├── llm/tools.js ── llm/long-term-memory.js
+            │             │               ├── llm/tools.js ──┬── llm/long-term-memory.js
+            │             │               │                  └── llm/mcp-client.js ── config.js
             │             │               └── llm/skill.js
             │             ├── llm/recorder.js
             │             └── utils/time.js
             ├─ repeater.js ── tools/repeater.js ── utils/queue.js
             └─ proactive-chat.js ── llm/chat.js ──┬── llm/client.js
                                                   ├── llm/recorder.js
-                                                  ├── llm/tools.js
+                                                  ├── llm/tools.js ──┬── llm/long-term-memory.js
+                                                  │                  └── llm/mcp-client.js
                                                   ├── llm/skill.js
                                                   └── utils/time.js
 ```
