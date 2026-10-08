@@ -7,6 +7,7 @@ import { dirname, extname, resolve } from "node:path";
 import { execFile } from "node:child_process";
 import { resolveSrcPath, checkPathWhitelist } from "../utils/file-security.js";
 import {sendGroupMsg} from "../bot/actions.js";
+import {mcpClient} from "./mcp-client.js";
 
 /**
  *模型可以调用的工具
@@ -167,8 +168,10 @@ const tools = [
     }
 ]
 
-export default tools;
 
+export async function getAllTools() {
+    return [...tools, ...await mcpClient.getToolDefinition()];
+}
 
 
 async function getMemory(param) {
@@ -479,6 +482,12 @@ const toolMap = new Map(
  * @param {object} parameter
  */
 export async function callTool(name, parameter){
+    if (name.startsWith("mcp_")) {
+        const originalName = name.slice(4);
+        const result = await mcpClient.callTool(originalName, parameter);
+        return `${name}调用结果:\n${result}`;
+    }
+
     const tool = toolMap.get(name);
     if (!tool) {
         throw new Error(`未知工具: ${name}`);

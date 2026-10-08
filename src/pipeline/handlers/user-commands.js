@@ -4,6 +4,8 @@ import recorder from "../../llm/recorder.js";
 import config from "../../config.js";
 import {skills} from "../../llm/skill.js";
 import {reloadSkills} from "../../llm/skill.js";
+import {mcpClient} from "../../llm/mcp-client.js";
+import {getAllTools} from "../../llm/tools.js";
 
 const cmds = [
     {
@@ -148,6 +150,23 @@ const cmds = [
                 config.agentMode = false;
                 return "关闭了agent模式";
             }
+        }
+    },
+    {
+        name:"mcp",
+        description: "列出MCP配置",
+        params: [],
+        handler: async (args, ctx) => {
+            const result = [...mcpClient.connections.keys()];
+            return `MCP列表：\n${result.join("\n")}`;
+        }
+    },
+    {
+        name:"tools",
+        description: "工具列表",
+        params: [],
+        handler:async (args, ctx) => {
+            return "工具列表：\n" + (await getAllTools()).map(tool => tool.function.name).join("\n");
         }
     }
 ];

@@ -126,6 +126,14 @@ const baseConfig = {
     /** Agent模式 */
     agentMode: false,
 
+    /**
+     * MCP Server 配置列表
+     * transport: "stdio"（本地子进程）或 "sse"（远程 HTTP）
+     * stdio 模式需要: command, args
+     * sse 模式需要: url
+     */
+    mcpServers: [],
+
     // ========== 成员映射 ==========
 
     /**

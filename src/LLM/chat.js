@@ -5,8 +5,7 @@ import { chatRecorder } from "./recorder.js";
 import { nowTime } from "../utils/time.js";
 import config from "../config.js";
 import logger from "../utils/logger.js";
-import tools from "./tools.js";
-import {callTool} from "./tools.js";
+import {callTool, getAllTools} from "./tools.js";
 import {skills} from "./skill.js";
 
 const SYSTEM_PROMPT = config.SYSTEM_PROMPT;
@@ -42,7 +41,7 @@ export default async function chat() {
         temperature: 0.2,
         enableSearch: true,
         responseFormat: { type: "json_object" },
-        tools: tools,
+        tools: await getAllTools(),
     });
 
     let tokenCount = 0;
@@ -86,7 +85,7 @@ export default async function chat() {
             temperature: 0.2,
             enableSearch: true,
             responseFormat: { type: "json_object" },
-            tools: tools,
+            tools: await getAllTools(),
         });
         if (typeof result === "string") {
             return "ERROR:"+result;
