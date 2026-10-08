@@ -462,11 +462,11 @@ tools.js 中的 callTool() 调度到对应函数
 
 **支持的传输协议：**
 
-| transport | 协议 | 适用场景 | 配置项 |
-|-----------|------|---------|--------|
-| `stdio` | 本地子进程 | 本地 MCP Server（如 filesystem） | `command`, `args` |
-| `sse` | 旧版 SSE | 阿里云百炼等 `/sse` 端点 | `url`, `headers` |
-| `streamableHttp` | 新版 Streamable HTTP | 标准 MCP `/mcp` 端点 | `url`, `headers` |
+| transport | 协议 | 适用场景                         | 配置项 |
+|-----------|------|----------------------------------|--------|
+| `stdio`   | 本地子进程 | 本地 MCP Server（如 filesystem） | `command`, `args` |
+| `old_sse` | 旧版 SSE | 旧sse                            | `url`, `headers` |
+| `sse`     | 新版 Streamable HTTP | 标准 MCP                         | `url`, `headers` |
 
 **配置示例（`configDev.js`）：**
 
