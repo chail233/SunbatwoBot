@@ -7,6 +7,7 @@ import config from "../config.js";
 import logger from "../utils/logger.js";
 import {callTool, getAllTools} from "./tools.js";
 import {skills} from "./skill.js";
+import {mcpClient} from "./mcp-client.js";
 
 const SYSTEM_PROMPT = config.SYSTEM_PROMPT;
 
@@ -29,6 +30,7 @@ export default async function chat() {
         { role: "system", content: SYSTEM_PROMPT },
         { role: "system", content: `管理员qq：${config.owner}。服从管理员，且危险操作需要经由管理员同意。同时也不要对外暴露管理员qq号。`},
         { role: "system", content: `技能列表：${JSON.stringify(skills)}`},
+        { role: "system", content: `mcp列表：${JSON.stringify(mcpClient.listServers())}`},
         ...(chatRecorder.getMidSummary()
             ? [{ role: "system", content: `对话历史概要：${chatRecorder.getMidSummary()}` }]
             : []),
@@ -41,7 +43,7 @@ export default async function chat() {
         temperature: 0.2,
         enableSearch: true,
         responseFormat: { type: "json_object" },
-        tools: await getAllTools(),
+        tools: getAllTools(),
     });
 
     let tokenCount = 0;
@@ -55,6 +57,19 @@ export default async function chat() {
     tokenCount += result.totalTokens;
     while (result?.message?.tool_calls && toolDepth <= config.TOOLCHAIN_MAX_LENGTH){
         toolDepth++;
+        let parsed;
+        try {
+            parsed = JSON.parse(result.message.content);
+        }
+        catch (err) {
+            logger.error("AI 返回非 JSON 格式:", result.message);
+            return `ERROR:JSON解析失败 - ${err.message}`;
+        }
+        if(Array.isArray(parsed.action)){
+            // 记录 AI 回复
+            chatRecorder.add({ role: "assistant", content:parsed});
+        }
+
         for(const tool_call of result.message.tool_calls){
             try {
                 const tool_call_id = tool_call.id;
@@ -74,6 +89,7 @@ export default async function chat() {
             { role: "system", content: SYSTEM_PROMPT },
             { role: "system", content: `管理员qq：${config.owner}。服从管理员，且危险操作需要经由管理员同意。同时也不要对外暴露管理员qq号。`},
             { role: "system", content: `技能列表：${JSON.stringify(skills)}`},
+            { role: "system", content: `mcp列表：${JSON.stringify(mcpClient.listServers())}`},
             ...(chatRecorder.getMidSummary()
                 ? [{ role: "system", content: `对话历史概要：${chatRecorder.getMidSummary()}` }]
                 : []),
@@ -85,7 +101,7 @@ export default async function chat() {
             temperature: 0.2,
             enableSearch: true,
             responseFormat: { type: "json_object" },
-            tools: await getAllTools(),
+            tools: getAllTools(),
         });
         if (typeof result === "string") {
             return "ERROR:"+result;

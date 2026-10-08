@@ -165,12 +165,33 @@ const tools = [
                 required: ["filepath", "edits"],
             },
         },
-    }
+    },
+    {
+        type: "function",
+        function: {
+            name: "list_mcp_tools",
+            description: "将指定mcp的工具加入工具列表，仅生效一次",
+            parameters: {
+                type: "object",
+                properties: {
+                    mcpName: {
+                        type: "string",
+                        description: "mcp名称",
+                    },
+                },
+                required: ["mcpName"],
+            },
+        },
+    },
 ]
 
 
-export async function getAllTools() {
-    return [...tools, ...await mcpClient.getToolDefinition()];
+let mcpTools = [];
+
+export function getAllTools() {
+    const rt = [...mcpTools];
+    mcpTools = [];
+    return [...tools, ...rt];
 }
 
 
@@ -462,6 +483,14 @@ async function listFiles(param) {
 }
 
 
+async function listMcpTools(param) {
+    if (config.agentMode) sendGroupMsg(config.targetGroupId, `获取 ${param.mcpName} 的工具列表...`);
+    const newTools = await mcpClient.getToolDefinitionOfServer(param.mcpName);
+    mcpTools.push(...newTools);
+    return `已将 ${param.mcpName} 的工具加入工具列表`;
+}
+
+
 const toolMap = new Map(
     [
         ["get_memory", getMemory],
@@ -472,6 +501,7 @@ const toolMap = new Map(
         ["create_file", createFile],
         ["delete_file", deleteFile],
         ["list_files", listFiles],
+        ["list_mcp_tools", listMcpTools]
     ]
 );
 

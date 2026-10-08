@@ -144,6 +144,27 @@ class McpClientManager{
         return definitions;
     }
 
+    async getToolDefinitionOfServer(serverName){
+        if(!this.initialized) return [];
+        const definitions = [];
+        if(!this.connections.has(serverName)) return definitions;
+        const connection = this.connections.get(serverName);
+        if(connection){
+            const tools = await connection.listTools();
+            for(const tool of tools){
+                definitions.push({
+                    type:"function",
+                    function:{
+                        name:`mcp_${tool.name}`,
+                        description:tool.description ?? "",
+                        parameters:tool.inputSchema ?? {},
+                    },
+                });
+            }
+        }
+        return definitions;
+    }
+
     async callTool(toolName, args){
         const serverName = this.toolServerMap.get(toolName);
         if(serverName){
@@ -165,6 +186,14 @@ class McpClientManager{
         this.toolServerMap.clear();
         this._toolCache?.clear();
         this.initialized = false;
+    }
+
+    listServers(){
+        return config.mcpServers.map((server) => {
+            return{
+                name: server.name,
+                description: server.description ?? "",
+            }});
     }
 }
 
