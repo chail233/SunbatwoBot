@@ -141,11 +141,11 @@ const cmds = [
             if (!ctx.isAdmin) return "无权限";
             if (args.length === 0) return "缺少参数 true/false";
             if (args[0] === "true") {
-                config.DevMode = true;
+                config.agentMode = true;
                 return "开启了agent模式";
             }
             else {
-                config.DevMode = false;
+                config.agentMode = false;
                 return "关闭了agent模式";
             }
         }
