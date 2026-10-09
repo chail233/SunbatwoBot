@@ -2,7 +2,6 @@
 
 import { callLLM } from "./client.js";
 import { chatRecorder } from "./recorder.js";
-import { nowTime } from "../utils/time.js";
 import config from "../config.js";
 import logger from "../utils/logger.js";
 import {callTool, getAllTools} from "./tools.js";
@@ -57,18 +56,7 @@ export default async function chat() {
     tokenCount += result.totalTokens;
     while (result?.message?.tool_calls && toolDepth <= config.TOOLCHAIN_MAX_LENGTH){
         toolDepth++;
-        let parsed;
-        try {
-            parsed = JSON.parse(result.message.content);
-        }
-        catch (err) {
-            logger.error("AI 返回非 JSON 格式:", result.message);
-            return `ERROR:JSON解析失败 - ${err.message}`;
-        }
-        if(Array.isArray(parsed.action)){
-            // 记录 AI 回复
-            chatRecorder.add({ role: "assistant", content:parsed});
-        }
+        chatRecorder.add({ role: "assistant", content: "调用工具:\n"+JSON.stringify(result.message.tool_calls) });
 
         for(const tool_call of result.message.tool_calls){
             try {
@@ -76,7 +64,7 @@ export default async function chat() {
                 const tool_name = tool_call.function.name;
                 const tool_args = JSON.parse(tool_call.function.arguments);
                 const tool_result = await callTool(tool_name, tool_args);
-                chatRecorder.add({role: "tool", content: { text: tool_result, time: nowTime() }, tool_call_id: tool_call_id});
+                chatRecorder.add({role: "tool", content: { text: tool_result }, tool_call_id: tool_call_id});
                 logger.info("调用工具:", tool_name, " 参数：", tool_args, " 结果：", tool_result);
             }
             catch (err) {
