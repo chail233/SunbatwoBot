@@ -56,7 +56,7 @@ export async function confirm(id) {
     try {
         const toolCall = entry.toolCall;
         const result = await callTool(toolCall, null, true);
-        recorder.add({ role: "tool", content: { text: result }, tool_call_id: toolCall.id });
+        recorder.add({ role: "tool", content: { text: `已确认执行 ${entry.toolName}, 结果: ${result.text}` }, tool_call_id: toolCall.id });
         return { ok: true, text: `#${id} ${entry.toolName} 已执行，结果已注入对话上下文`};
     } 
     catch (err) {

@@ -45,7 +45,7 @@ export default async function chat(ctx) {
     while (result?.message?.tool_calls && toolDepth <= config.TOOLCHAIN_MAX_LENGTH){
         toolDepth++;
         let parsed = handleReply(result.message.content);
-        if(parsed){
+        if(parsed.length > 0){
             await sendAiReply(ctx.adapter, ctx.event.group_id, {acts: parsed, tokens: tokenCount});
             tokenCount = 0;
         }
@@ -63,6 +63,7 @@ export default async function chat(ctx) {
                 await sendAiReply(ctx.adapter, ctx.event.group_id, `ERROR:工具调用失败 - ${err.message}`);
             }
         }
+        // chatRecorder.add({role: "system", content: { text: "工具调用已完成，请继续以JSON格式输出回复。" }});
         result = await callLLM({
             model: config.CHAT_MODEL,
             messages: buildMessages(),
@@ -123,29 +124,39 @@ export async function sendAiReply(adapter, groupId, res) {
         }
         await sleep(3000 + Math.floor(Math.random() * 1000));
     }
-    chatRecorder.add({ role: "assistant", content: JSON.stringify(res.acts) });
+    chatRecorder.add({ role: "assistant", content: res.acts });
     chatRecorder.msgWithoutChat = 0
 }
 
 /**
  * 处理 AI 回复
- * @param {string} content
+ * 支持三种格式：
+ *   1. {action: [...]}  — 预期的标准格式
+ *   2. [...]            — AI 直接返回数组
+ *   3. 纯文本           — 降级为 text 消息
+ * @param {string|null} content
  * @returns {Array<{cmd: string, content: string}>}
  */
 function handleReply(content){
-    if(content.trim() === "") return [];
+    if(!content || content.trim() === "") return [];
     let parsed;
     try {
         parsed = JSON.parse(content);
     }
     catch (err) {
         logger.error("AI 返回非 JSON 格式:", content);
-    }
-
-    if(Array.isArray(parsed.action)){
-        return parsed.action;
-    }
-    else {
         return [{cmd: "text", content: content}];
     }
+
+    // 标准格式：{action: [...]}
+    if(parsed && Array.isArray(parsed.action)){
+        return parsed.action;
+    }
+    // AI 直接返回数组：[{cmd, content}, ...]
+    if(Array.isArray(parsed)){
+        return parsed;
+    }
+    // JSON 对象但没有 action 字段，降级为文本
+    logger.warn("AI 返回 JSON 但格式不匹配:", content);
+    return [{cmd: "text", content: content}];
 }

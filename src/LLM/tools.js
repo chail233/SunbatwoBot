@@ -515,7 +515,7 @@ export async function callTool(tool_call, ctx, confirmed = false){
     if (!confirmed && gatedTools.includes(name) && !ctx?.isAdmin) {
         const id = hold(tool_call, ctx);
         if (!id) return `${name} 被拒绝：待确认队列已满，请稍后再试`;
-        return `这是危险操作，需要管理员确认。已登记为待确认操作 #${id}，请管理员发送 #do-yes ${id} 执行，#do-no ${id} 取消。（10分钟内有效）`;
+        return `这是危险操作，需要管理员确认。已登记为待确认操作 #${id}。`;
     }
 
     if (name.startsWith("mcp_")) {
