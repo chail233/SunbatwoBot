@@ -24,21 +24,10 @@ export default async function chat() {
     // 触发中期记忆概括（如需）
     await chatRecorder.summarizeCache();
 
-    // 构造请求消息列表
-    const messages = [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "system", content: `管理员qq：${config.owner}。服从管理员，且危险操作需要经由管理员同意。同时也不要对外暴露管理员qq号。`},
-        { role: "system", content: `技能列表：${JSON.stringify(skills)}`},
-        { role: "system", content: `mcp列表：${JSON.stringify(mcpClient.listServers())}`},
-        ...(chatRecorder.getMidSummary()
-            ? [{ role: "system", content: `对话历史概要：${chatRecorder.getMidSummary()}` }]
-            : []),
-        ...chatRecorder.getAll(),
-    ];
 
     let result = await callLLM({
         model: config.CHAT_MODEL,
-        messages,
+        messages: buildMessages(),
         temperature: 0.2,
         enableSearch: true,
         responseFormat: { type: "json_object" },
@@ -70,20 +59,9 @@ export default async function chat() {
                 return `ERROR:工具调用失败 - ${err.message}`;
             }
         }
-        // 重建消息列表
-        const updatedMessages = [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "system", content: `管理员qq：${config.owner}。服从管理员，且危险操作需要经由管理员同意。同时也不要对外暴露管理员qq号。`},
-            { role: "system", content: `技能列表：${JSON.stringify(skills)}`},
-            { role: "system", content: `mcp列表：${JSON.stringify(mcpClient.listServers())}`},
-            ...(chatRecorder.getMidSummary()
-                ? [{ role: "system", content: `对话历史概要：${chatRecorder.getMidSummary()}` }]
-                : []),
-            ...chatRecorder.getAll(),
-        ];
         result = await callLLM({
             model: config.CHAT_MODEL,
-            messages: updatedMessages,
+            messages: buildMessages(),
             temperature: 0.2,
             enableSearch: true,
             responseFormat: { type: "json_object" },
@@ -115,4 +93,17 @@ export default async function chat() {
         acts: parsed.action??[],
         tokens: tokenCount,
     };
+}
+
+function buildMessages(){
+    return [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: `管理员qq：${config.owner}。服从管理员，且危险操作需要经由管理员同意。同时也不要对外暴露管理员qq号。`},
+        { role: "system", content: `技能列表：${JSON.stringify(skills)}`},
+        { role: "system", content: `mcp列表：${JSON.stringify(mcpClient.listServers())}`},
+        ...(chatRecorder.getMidSummary()
+            ? [{ role: "system", content: `对话历史概要：${chatRecorder.getMidSummary()}` }]
+            : []),
+        ...chatRecorder.getAll(),
+    ];
 }

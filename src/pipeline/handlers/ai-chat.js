@@ -15,10 +15,14 @@ import { formatTime } from "../../utils/time.js";
  * 发送 AI 回复（支持多条消息分段发送）
  * @param {import("../../bot/adapter.js").OneBotAdapter} adapter
  * @param {string|number} groupId
- * @param {{acts: Array<{cmd: string, content: string}>, tokens: number}} res
+ * @param {{acts: Array<{cmd: string, content: string}>, tokens: number}|string} res
  */
 export async function sendAiReply(adapter, groupId, res) {
     let first = true;
+    if(typeof res === "string"){
+        adapter.sendGroupMsg(groupId, res);
+        return;
+    }
     for (const act of res.acts) {
         if (act.cmd === "text") {
             let content = act.content;
