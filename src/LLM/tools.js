@@ -8,6 +8,7 @@ import { execFile } from "node:child_process";
 import { resolveSrcPath, checkPathWhitelist } from "../utils/file-security.js";
 import {sendGroupMsg} from "../bot/actions.js";
 import {mcpClient} from "./mcp-client.js";
+import {hold} from "./tool-approval.js";
 
 /**
  *模型可以调用的工具
@@ -59,7 +60,7 @@ const tools = [
         type: "function",
         function: {
             name: "run_JS",
-            description: "运行 JavaScript 脚本，可通过 args 传递参数给脚本。在使用此工具前必须询问管理员确认。",
+            description: "运行 JavaScript 脚本，可通过 args 传递参数给脚本。",
             parameters: {
                 type: "object",
                 properties: {
@@ -80,7 +81,7 @@ const tools = [
         type: "function",
         function: {
             name: "create_file",
-            description: "在指定路径创建新文件。文件必须不存在，否则会被拒绝。在使用此工具前必须询问管理员确认。",
+            description: "在指定路径创建新文件。文件必须不存在，否则会被拒绝。",
             parameters: {
                 type: "object",
                 properties: {
@@ -101,7 +102,7 @@ const tools = [
         type: "function",
         function: {
             name: "delete_file",
-            description: "删除指定路径的文件。此操作不可逆，在使用此工具前必须询问管理员确认。",
+            description: "删除指定路径的文件。此操作不可逆。",
             parameters: {
                 type: "object",
                 properties: {
@@ -135,7 +136,7 @@ const tools = [
         type: "function",
         function: {
             name: "edit_file",
-            description: "通过搜索替换的方式编辑文件内容。每个编辑操作需提供要查找的原文和替换后的新文本，原文必须在文件中唯一匹配。多个 edit 之间是有顺序依赖的。在使用此工具前必须询问管理员确认。",
+            description: "通过搜索替换的方式编辑文件内容。每个编辑操作需提供要查找的原文和替换后的新文本，原文必须在文件中唯一匹配。多个 edit 之间是有顺序依赖的。",
             parameters: {
                 type: "object",
                 properties: {
@@ -501,10 +502,22 @@ const toolMap = new Map(
 
 /**
  * 调用工具
- * @param {string} name
- * @param {object} parameter
+ * @param {object} tool_call 完整的工具调用对象 { id, function: { name, arguments } }
+ * @param {{isAdmin?: boolean, userId?: string, senderName?: string}|null} [ctx] 请求上下文
+ * @param {boolean} [confirmed=false] 是否已确认
  */
-export async function callTool(name, parameter){
+export async function callTool(tool_call, ctx, confirmed = false){
+    const name = tool_call.function.name;
+    const parameter = JSON.parse(tool_call.function.arguments);
+
+    // 危险操作门禁：非管理员发起且未确认时挂起，等待 #do-yes 确认
+    const gatedTools = config.gatedTools ?? [];
+    if (!confirmed && gatedTools.includes(name) && !ctx?.isAdmin) {
+        const id = hold(tool_call, ctx);
+        if (!id) return `${name} 被拒绝：待确认队列已满，请稍后再试`;
+        return `这是危险操作，需要管理员确认。已登记为待确认操作 #${id}，请管理员发送 #do-yes ${id} 执行，#do-no ${id} 取消。（10分钟内有效）`;
+    }
+
     if (name.startsWith("mcp_")) {
         const originalName = name.slice(4);
         const result = await mcpClient.callTool(originalName, parameter);

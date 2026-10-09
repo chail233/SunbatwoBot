@@ -50,7 +50,7 @@ const baseConfig = {
     // ========== 全局常量 ==========
 
     /** 对话上下文最大记录条数 */
-    CHAT_HISTORY_LIMIT: 30,
+    CHAT_HISTORY_LIMIT: 40,
 
     /** 无主动对话时，多少条消息后触发主动聊天 */
     PROACTIVE_CHAT_LIMIT: 15,
@@ -92,7 +92,7 @@ const baseConfig = {
     MEMORY_MIN_SCORE: 0.3,
 
     /** 工具链最大长度 */
-    TOOLCHAIN_MAX_LENGTH: 15,
+    TOOLCHAIN_MAX_LENGTH: 30,
 
     /** 长期记忆：记忆实体 ID 前缀（后接群号） */
     MEMORY_USER_ID_PREFIX: "SunBot",
@@ -122,6 +122,18 @@ const baseConfig = {
      * GitHub Token，用于访问 GitHub API
      */
     githubToken: null,
+
+
+    /**
+     * 需要管理员确认的工具
+     * MCP 工具用 mcp_ 前缀全名，本地工具用原始名
+     */
+    gatedTools: [
+        "edit_file",
+        "create_file",
+        "delete_file",
+        "run_JS",
+    ],
 
     /** Agent模式 */
     agentMode: false,
@@ -170,8 +182,16 @@ if (baseConfig.DevMode) {
     const devConfigPath = join(__dirname, "configDev.js");
     if (existsSync(devConfigPath)) {
         const devConfig = (await import(pathToFileURL(devConfigPath).href)).default;
+        // mcpServers 数组合并（dev 追加到 base 之后），其余字段直接覆盖
+        const baseMcp = baseConfig.mcpServers ?? [];
+        const devMcp = devConfig.mcpServers ?? [];
+        const baseGated = baseConfig.gatedTools ?? [];
+        const devGated = devConfig.gatedTools ?? [];
         Object.assign(baseConfig, devConfig);
-    } else {
+        baseConfig.mcpServers = [...baseMcp, ...devMcp];
+        baseConfig.gatedTools = [...baseGated, ...devGated];
+    }
+    else {
         console.error("[config] DevMode 为 true，但找不到 configDev.js");
         process.exit(1);
     }

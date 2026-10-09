@@ -1,1 +1,6 @@
 /src/configDev.js
+/src/app.pem
+/secrets/
+
+*.pem
+/mcp/

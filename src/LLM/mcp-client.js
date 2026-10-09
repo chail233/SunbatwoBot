@@ -1,4 +1,4 @@
-import {StdioClientTransport} from "@modelcontextprotocol/client/stdio";
+import {StdioClientTransport, getDefaultEnvironment} from "@modelcontextprotocol/client/stdio";
 import {Client, StreamableHTTPClientTransport} from "@modelcontextprotocol/client";
 import {SSEClientTransport} from "@modelcontextprotocol/sdk/client/sse.js";
 import logger from "../utils/logger.js";
@@ -20,6 +20,7 @@ class McpConnection{
                 {
                     command:this.config.command,
                     args:this.config.args ?? [],
+                    env: { ...getDefaultEnvironment(), ...(this.config.env ?? {}) },
                 }
             );
         }

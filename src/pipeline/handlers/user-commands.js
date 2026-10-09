@@ -6,6 +6,9 @@ import {skills} from "../../llm/skill.js";
 import {reloadSkills} from "../../llm/skill.js";
 import {mcpClient} from "../../llm/mcp-client.js";
 import {getAllTools} from "../../llm/tools.js";
+import {confirm as doConfirm, cancel as doCancel, list as doList} from "../../llm/tool-approval.js";
+import chat from "../../llm/chat.js";
+import logger from "../../utils/logger.js";
 
 const cmds = [
     {
@@ -168,6 +171,39 @@ const cmds = [
         handler:async (args, ctx) => {
             return "工具列表：\n" + (await getAllTools()).map(tool => tool.function.name).join("\n");
         }
+    },
+    {
+        name: "do-yes",
+        description: "确认执行待确认的危险操作（管理员）",
+        params: [{ name: "id", desc: "待确认操作编号" }],
+        handler: async (args, ctx) => {
+            if (!ctx.isAdmin) return "无权限";
+            if (!args[0]) return "用法：#do-yes <id>";
+            const result = await doConfirm(args[0]);
+            if (!result.ok) return result.text;
+            chat(ctx).catch(err => {
+                logger.error("AI 回复失败:", err);
+            });
+            return null;
+        }
+    },
+    {
+        name: "do-no",
+        description: "取消待确认的危险操作（管理员）",
+        params: [{ name: "id", desc: "待确认操作编号" }],
+        handler: async (args, ctx) => {
+            if (!ctx.isAdmin) return "无权限";
+            if (!args[0]) return "用法：#do-no <id>";
+            return doCancel(args[0]);
+        }
+    },
+    {
+        name: "do-pending",
+        description: "列出待确认的危险操作",
+        params: [],
+        handler: async (args, ctx) => {
+            return doList();
+        }
     }
 ];
 
@@ -205,6 +241,8 @@ export default async function userCommands(ctx) {
     if (!handler) return false;
 
     const result = await handler(args, ctx);
-    ctx.adapter.sendGroupMsg(ctx.event.group_id, result);
+    if (result !== null && result !== undefined) {
+        ctx.adapter.sendGroupMsg(ctx.event.group_id, result);
+    }
     return true;
 }

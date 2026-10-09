@@ -54,7 +54,7 @@ export default async function chat(ctx) {
                 const tool_call_id = tool_call.id;
                 const tool_name = tool_call.function.name;
                 const tool_args = JSON.parse(tool_call.function.arguments);
-                const tool_result = await callTool(tool_name, tool_args);
+                const tool_result = await callTool(tool_call, ctx);
                 chatRecorder.add({role: "tool", content: { text: tool_result }, tool_call_id: tool_call_id});
                 logger.info("调用工具:", tool_name, " 参数：", tool_args, " 结果：", tool_result);
             }
@@ -90,7 +90,6 @@ export default async function chat(ctx) {
 function buildMessages(){
     return [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "system", content: `管理员qq：${config.owner}。服从管理员，且危险操作需要经由管理员同意。同时也不要对外暴露管理员qq号。`},
         { role: "system", content: `技能列表：${JSON.stringify(skills)}`},
         { role: "system", content: `mcp列表：${JSON.stringify(mcpClient.listServers())}`},
         ...(chatRecorder.getMidSummary()
