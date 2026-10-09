@@ -4,7 +4,6 @@ import chatAPI from "../../llm/chat.js";
 import recorder from "../../llm/recorder.js";
 import logger from "../../utils/logger.js";
 import config from "../../config.js";
-import {sendAiReply} from "./ai-chat.js";
 import { formatTime } from "../../utils/time.js";
 /**
  * 主动聊天处理器
@@ -31,13 +30,7 @@ export default async function proactiveChat(ctx) {
     if (recorder.msgWithoutChat >= config.PROACTIVE_CHAT_LIMIT) {
         logger.info("达到主动聊天阈值，触发 AI 对话");
         recorder.msgWithoutChat = 0;
-        const res = await chatAPI();
-        if (typeof res !== "string") {
-            await sendAiReply(ctx.adapter, ctx.event.group_id, res);
-        }
-        else{
-            logger.error("AI 响应异常:", res);
-        }
+        await chatAPI(ctx);
         return true;
     }
 

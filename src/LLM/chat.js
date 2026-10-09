@@ -1,5 +1,3 @@
-// @ts-check
-
 import { callLLM } from "./client.js";
 import { chatRecorder } from "./recorder.js";
 import config from "../config.js";
@@ -7,6 +5,7 @@ import logger from "../utils/logger.js";
 import {callTool, getAllTools} from "./tools.js";
 import {skills} from "./skill.js";
 import {mcpClient} from "./mcp-client.js";
+import sleep from "../utils/sleep.js";
 
 const SYSTEM_PROMPT = config.SYSTEM_PROMPT;
 
@@ -16,11 +15,10 @@ const SYSTEM_PROMPT = config.SYSTEM_PROMPT;
  */
 
 /**
- * 发送一条用户消息给 AI，获取回复
- * @returns {Promise<ChatResult|string>}
- *   成功返回 {acts, tokens}，失败返回错误字符串
+ * 处理用户消息，生成 AI 回复
+ * @returns {Promise<void>}
  */
-export default async function chat() {
+export default async function chat(ctx) {
     // 触发中期记忆概括（如需）
     await chatRecorder.summarizeCache();
 
@@ -37,7 +35,8 @@ export default async function chat() {
     let tokenCount = 0;
 
     if (!result || typeof result === "string") {
-        return typeof result === "string" ? "ERROR:" + result : "ERROR:AI 服务无响应";
+        await sendAiReply(ctx.adapter, ctx.event.group_id, typeof result === "string" ? "ERROR:" + result : "ERROR:AI 服务无响应");
+        return;
     }
 
 
@@ -45,6 +44,11 @@ export default async function chat() {
     tokenCount += result.totalTokens;
     while (result?.message?.tool_calls && toolDepth <= config.TOOLCHAIN_MAX_LENGTH){
         toolDepth++;
+        let parsed = handleReply(result.message.content);
+        if(parsed){
+            await sendAiReply(ctx.adapter, ctx.event.group_id, {acts: parsed, tokens: tokenCount});
+            tokenCount = 0;
+        }
         for(const tool_call of result.message.tool_calls){
             try {
                 const tool_call_id = tool_call.id;
@@ -56,7 +60,7 @@ export default async function chat() {
             }
             catch (err) {
                 logger.error("AI 工具调用失败:", err);
-                return `ERROR:工具调用失败 - ${err.message}`;
+                await sendAiReply(ctx.adapter, ctx.event.group_id, `ERROR:工具调用失败 - ${err.message}`);
             }
         }
         result = await callLLM({
@@ -68,31 +72,19 @@ export default async function chat() {
             tools: getAllTools(),
         });
         if (typeof result === "string") {
-            return "ERROR:"+result;
+            await sendAiReply(ctx.adapter, ctx.event.group_id, "ERROR:"+result);
+            return;
         }
         tokenCount += result.totalTokens;
     }
 
-    logger.info("AI 消息数组内容:", result.message.content);
     // 解析 JSON 响应
-    let parsed;
-    try {
-        parsed = JSON.parse(result.message.content);
-    }
-    catch (err) {
-        logger.error("AI 返回非 JSON 格式:", result.message);
-        return `ERROR:JSON解析失败 - ${err.message}`;
-    }
+    let parsed = handleReply(result.message.content);
 
-    if(Array.isArray(parsed.action)){
-        // 记录 AI 回复
-        chatRecorder.add({ role: "assistant", content:parsed});
-    }
-
-    return {
-        acts: parsed.action??[],
+    await sendAiReply(ctx.adapter, ctx.event.group_id, {
+        acts: parsed??[],
         tokens: tokenCount,
-    };
+    });
 }
 
 function buildMessages(){
@@ -106,4 +98,55 @@ function buildMessages(){
             : []),
         ...chatRecorder.getAll(),
     ];
+}
+
+/**
+ * 发送 AI 回复（支持多条消息分段发送）
+ * @param {import("../../bot/adapter.js").OneBotAdapter} adapter
+ * @param {string|number} groupId
+ * @param {{acts: Array<{cmd: string, content: string}>, tokens: number}|string} res
+ */
+export async function sendAiReply(adapter, groupId, res) {
+    let first = true;
+    if(typeof res === "string"){
+        res = {acts: [{cmd: "text", content: res}], tokens: 0};
+    }
+    logger.info("AI 消息内容:", JSON.stringify(res));
+    for (const act of res.acts) {
+        if (act.cmd === "text") {
+            let content = act.content;
+            if(content.trim() === "") continue;
+            if (first) {
+                first = false;
+                if(res.tokens)content += `(${res.tokens}tokens)`;
+            }
+            adapter.sendGroupMsg(groupId, content);
+        }
+        await sleep(3000 + Math.floor(Math.random() * 1000));
+    }
+    chatRecorder.add({ role: "assistant", content: JSON.stringify(res.acts) });
+    chatRecorder.msgWithoutChat = 0
+}
+
+/**
+ * 处理 AI 回复
+ * @param {string} content
+ * @returns {Array<{cmd: string, content: string}>}
+ */
+function handleReply(content){
+    if(content.trim() === "") return [];
+    let parsed;
+    try {
+        parsed = JSON.parse(content);
+    }
+    catch (err) {
+        logger.error("AI 返回非 JSON 格式:", content);
+    }
+
+    if(Array.isArray(parsed.action)){
+        return parsed.action;
+    }
+    else {
+        return [{cmd: "text", content: content}];
+    }
 }

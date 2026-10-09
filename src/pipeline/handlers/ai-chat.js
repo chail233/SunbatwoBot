@@ -1,7 +1,4 @@
-// @ts-check
-
 import chatAPI from "../../llm/chat.js";
-import sleep from "../../utils/sleep.js";
 import logger from "../../utils/logger.js";
 import chatrecorder from "../../llm/recorder.js";
 import { formatTime } from "../../utils/time.js";
@@ -11,32 +8,6 @@ import { formatTime } from "../../utils/time.js";
  * 当消息 @ 机器人时触发
  */
 
-/**
- * 发送 AI 回复（支持多条消息分段发送）
- * @param {import("../../bot/adapter.js").OneBotAdapter} adapter
- * @param {string|number} groupId
- * @param {{acts: Array<{cmd: string, content: string}>, tokens: number}|string} res
- */
-export async function sendAiReply(adapter, groupId, res) {
-    let first = true;
-    if(typeof res === "string"){
-        adapter.sendGroupMsg(groupId, res);
-        return;
-    }
-    for (const act of res.acts) {
-        if (act.cmd === "text") {
-            let content = act.content;
-            if (first) {
-                first = false;
-                content += `(${res.tokens}tokens)`;
-            }
-            adapter.sendGroupMsg(groupId, content);
-        }
-        await sleep(3000 + Math.floor(Math.random() * 1000));
-    }
-
-    chatrecorder.msgWithoutChat = 0
-}
 
 /**
  * @param {object} ctx
@@ -59,14 +30,7 @@ export default async function aiChat(ctx) {
     chatrecorder.add(msg);
     logger.info("AI 对话请求:", content);
 
-    const res = await chatAPI();
-    if (typeof res === "string") {
-        // 错误响应
-        ctx.adapter.sendGroupMsg(ctx.event.group_id, res);
-    }
-    else {
-        await sendAiReply(ctx.adapter, ctx.event.group_id, res);
-    }
+    await chatAPI(ctx);
 
     return true;
 }
