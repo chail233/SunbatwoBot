@@ -206,7 +206,6 @@ async function getMemory(param) {
 
         if (userMessages.length === 0) return "没有有效对话记录";
 
-        if(config.agentMode) sendGroupMsg(config.targetGroupId, "搜索记忆...");
         const recalled = await searchMemory(userId, userMessages);
         logger.debug("长期记忆搜索结果:", recalled);
         return recalled.join("\n---\n") || "没有找到相关记忆";
@@ -221,7 +220,6 @@ async function getMemory(param) {
 async function getUserProfileTool(param) {
     const qq = param?.qq;
     if (!qq) return "缺少 QQ 号参数";
-    if(config.agentMode) sendGroupMsg(config.targetGroupId, `获取用户${qq}画像...`);
     const profile = await getUserProfile(qq);
     if (!profile) return `未找到 QQ 号 ${qq} 的用户画像`;
     return profile;
@@ -238,7 +236,6 @@ async function readFile(param) {
     const whitelistResult = checkPathWhitelist(pathResult.fullPath, config.readFileDirs || [], "读取");
     if (whitelistResult.error) return whitelistResult.error;
 
-    if(config.agentMode) sendGroupMsg(config.targetGroupId, `读取文件${filepath}...`);
     try {
          return await fsReadFile(pathResult.fullPath, "utf-8");
     }
@@ -271,7 +268,6 @@ async function runJS(param) {
     const whitelistResult = checkPathWhitelist(pathResult.fullPath, config.runJsDirs || [], "执行");
     if (whitelistResult.error) return whitelistResult.error;
 
-    if(config.agentMode) sendGroupMsg(config.targetGroupId, `执行脚本${filepath}...`);
     try {
         // 在子进程中执行脚本，参数通过 process.argv[2] 以 JSON 形式传递
         const args = param?.args ?? {};
@@ -327,7 +323,6 @@ async function createFile(param) {
     const whitelistResult = checkPathWhitelist(pathResult.fullPath, config.editFileDirs || [], "创建文件");
     if (whitelistResult.error) return whitelistResult.error;
 
-    if(config.agentMode) sendGroupMsg(config.targetGroupId, `创建文件${filepath}...`);
     try {
         // 确保父目录存在
         await mkdir(dirname(pathResult.fullPath), { recursive: true });
@@ -357,7 +352,6 @@ async function deleteFile(param) {
 
     const whitelistResult = checkPathWhitelist(pathResult.fullPath, config.editFileDirs || [], "删除");
     if (whitelistResult.error) return whitelistResult.error;
-    if(config.agentMode) sendGroupMsg(config.targetGroupId, `删除文件${filepath}...`);
 
     try {
         await rm(pathResult.fullPath);
@@ -455,7 +449,6 @@ async function listFiles(param) {
     const whitelistResult = checkPathWhitelist(pathResult.fullPath, config.readFileDirs || [], "列出文件");
     if (whitelistResult.error) return whitelistResult.error;
 
-    if (config.agentMode) sendGroupMsg(config.targetGroupId, `查看目录${dirpath}...`);
     try {
         const entries = await readdir(pathResult.fullPath);
         if (entries.length === 0) return `目录 "${dirpath}" 为空`;
