@@ -32,146 +32,39 @@
 ### 环境要求
 
 - Node.js >= 24
-- NapCat 客户端已运行并配置好反向 WebSocket 连接（详见NapCat文档）
+- NapCat 客户端已运行并配置好反向 WebSocket 连接
 
-### 获取代码与安装依赖
-``` bash
+### 安装与启动
+
+```bash
 # 拉取代码
 git clone https://github.com/chail233/SunbatwoBot
 # 安装依赖
 npm install
+# 启动
+npm start
 ```
 
 ### 配置
 
-所有配置集中在 `src/config.js` 中，包括基础配置、全局常量和成员映射。
+所有配置集中在 `src/config.js` 中。
 
-**开发环境：** 将 `config.js` 中的 `DevMode` 设为 `true`，然后在 `src/configDev.js` 中填写真实配置（如 Token、API Key 等）。
+**开发环境：** 将 `config.js` 中的 `DevMode` 设为 `true`，在 `src/configDev.js` 中填写真实配置（Token、API Key 等）。
 
-**生产环境：** 将 `DevMode` 设为 `false`，直接在 `config.js` 中填写真实配置值。
+**生产环境：** 将 `DevMode` 设为 `false`，直接在 `config.js` 中填写配置值。
 
-`configDev.js` 示例：
-```js
-const configDev = {
-    /** OneBot 鉴权 Token */
-    token: "your_token_here",
+主要配置项：
+- `token`: OneBot 鉴权 Token
+- `targetGroupId`: 目标群 ID
+- `selfId`: 机器人 QQ 号
+- `aiAPIKEY`: 阿里云 AI API Key
+- `qweatherKEY`: 和风天气 Key
+- `githubToken`: GitHub Token（可选，用于技能管理）
+- `members`: QQ 号 → 群昵称映射表
+- `EnableProactiveChat`: 是否启用主动聊天
+- `mcpServers`: MCP Server配置列表
 
-    /** 目标群 ID */
-    targetGroupId: "123456789",
-
-    /** 机器人自身 QQ 号 */
-    selfId: "1234567890",
-
-    /** 主人 QQ 号 */
-    owner: "1234567890",
-
-    /** 阿里云 AI API Key */
-    aiAPIKEY: "sk-xxx",
-
-    /** 和风天气 Key */
-    qweatherKEY: "your_key_here",
-
-    /** GitHub Token（可选，用于技能管理功能） */
-    githubToken: "ghp_xxx",
-
-    /** QQ 号 → 群昵称 映射表 */
-    members: new Map([
-        ["1234567890", "昵称"],
-    ]),
-};
-
-export default configDev;
-```
-
-`config.js` 中的常量配置（按需修改）：
-```js
-/** 对话上下文最大记录条数 */
-CHAT_HISTORY_LIMIT: 30,
-
-/** 无主动对话时，多少条消息后触发主动聊天 */
-PROACTIVE_CHAT_LIMIT: 15,
-
-/** LLM API 基础地址 */
-LLM_API_URL: "https://workspace.aliyuncs.com",
-
-/** 聊天模型名称 */
-CHAT_MODEL: "deepseek-v4.1-flash",
-
-/** 识图模型名称 */
-VISION_MODEL: "qwen3.7-flash",
-
-/** 模型接口超时（毫秒） */
-LLM_TIMEOUT: 60000,
-
-/** 一言 API 限流：时间窗口 */
-SENTENCE_LIMIT_TIME: 10000,
-
-/** 一言 API 限流：窗口内最大次数 */
-SENTENCE_LIMIT_COUNT: 3,
-
-/** 复读检测队列长度 */
-REPEATER_QUEUE_SIZE: 10,
-
-/** 和风天气查询url */
-QW_BASE_URL: "https://m454e6xkq4.re.qweatherapi.com/v7",
-
-/** 和风城市id查询url */
-QW_GEO_BASE: "https://m454e6xkq4.re.qweatherapi.com/geo/v2",
-
-/** 长期记忆 API 基础地址 */
-MEMORY_API_BASE_URL: "https://workspace.aliyuncs.com/api/v2/apps/memory",
-
-/** 长期记忆搜索：最大召回数量 */
-MEMORY_SEARCH_TOP_K: 10,
-
-/** 长期记忆搜索：最小相似度阈值 */
-MEMORY_MIN_SCORE: 0.3,
-
-/** 长期记忆：记忆实体 ID 前缀（后接群号） */
-MEMORY_USER_ID_PREFIX: "SunBot",
-
-/** 长期记忆：用户画像规则 ID（在百炼平台配置） */
-MEMORY_PROFILE_SCHEMA_ID: "your_profile_schema_id",
-
-/** 文件读取工具白名单目录 */
-readFileDirs: ["skills", "workspace"],
-
-/** JS 脚本执行白名单目录 */
-runJsDirs: ["skills", "workspace"],
-
-/** 文件编辑工具白名单目录 */
-editFileDirs: ["skills", "workspace"],
-
-/** GitHub Token（可选，用于访问 GitHub API） */
-githubToken: null,
-
-/** Agent模式（开启后工具调用时会发送提示信息） */
-agentMode: false,
-
-/** 工具链最大长度（单次对话中工具调用次数上限） */
-TOOLCHAIN_MAX_LENGTH: 15,
-```
-
-`config.js` 中的系统提示词配置（`SYSTEM_PROMPT`）：
-
-系统提示词定义了 AI 的角色、行为约束和输出格式。主要包含：
-- 角色设定（QQ群成员"孙巴二娘"）
-- 行为约束（不编造内容、简短回应、自然发言等）
-- 输出格式要求（JSON 格式，支持分条发送消息）
-
-你可以根据需要修改 `SYSTEM_PROMPT` 来自定义 AI 的人设和行为。
-
-### 启动
-
-```bash
-npm start
-# 或
-node src/index.js
-```
-
-NapCat 配置反向 WebSocket 连接地址：`ws://127.0.0.1:8080/onebot/v11/ws`
-
-如果你的服务端和NapCat不在同一台机器，请填写该服务端所在设备的ip。
+NapCat 反向 WebSocket 连接地址：`ws://127.0.0.1:8080/onebot/v11/ws`
 
 ---
 
@@ -224,10 +117,10 @@ src/
 │   └── sunbatwo-girls.js       # 孙巴二娘图片 URL 列表
 │
 ├── tools/                      # 工具函数
-│   ├── repeater.js             # 复读检测算法
+│   └── repeater.js             # 复读检测算法
 │
 ├── skills/                     # Skill 技能目录（AI 可读写）
-│   └── skill-manager/          # 内置技能：技能管理器
+│   ├── skill-manager/          # 内置技能：技能管理器
 │
 ├── workspace/                  # 工作区目录（AI 可读写）
 │
@@ -237,7 +130,8 @@ src/
     ├── random.js               # 随机整数
     ├── queue.js                # 队列数据结构
     ├── time.js                 # 时间处理
-    └── image-type.js           # 图片格式检测（文件头魔数）
+    ├── image-type.js           # 图片格式检测（文件头魔数）
+    └── file-security.js        # 文件路径安全校验
 ```
 
 ---
@@ -328,30 +222,45 @@ AI 对话使用逐层压缩的记忆架构，在上下文窗口限制与长期�
 
 所有长期记忆操作失败均静默处理，不影响原有对话功能。
 
-### 如何添加新功能
+### 工具调用（Function Calling）
 
-#### 添加关键词命令
+AI可自主调用工具：
+- `get_memory`：搜索长期记忆
+- `get_user_profile`：获取用户画像
+- `read_file`、`run_JS`、`create_file`、`delete_file`、`edit_file`、`list_files`：文件操作（白名单限制）
+- `list_mcp_tools`：动态加载指定MCP Server的工具到工具列表
+
+### MCP 工具扩展
+
+支持连接外部MCP Server，三种传输协议：
+- `stdio`：本地子进程
+- `old_sse`：旧版SSE
+- `sse`：新版Streamable HTTP
+
+配置示例见 `configDev.js` 中的 `mcpServers` 字段。MCP工具通过 `list_mcp_tools` 工具动态加载到AI的工具列表中。
+
+### Skill 技能系统
+
+Skill是包含 `SKILL.md` 的目录，可包含脚本供AI调用。
+
+**内置技能：**
+- `skill-manager`：从GitHub安装/卸载社区技能
+
+**安全机制**：AI只能访问 `skills/` 和 `workspace/` 目录，脚本在子进程中执行（30秒超时）。
+
+## 开发指南
+
+### 添加关键词命令
 
 在 `pipeline/handlers/keyword-commands.js` 的 `CMD_MAP` 中添加：
 
 ```js
-CMD_MAP.set("你的关键词", async (ctx) => {
-    // ctx.adapter 可发送消息
-    // ctx.event 可获取原始事件数据
+CMD_MAP.set("关键词", async (ctx) => {
     ctx.adapter.sendGroupMsg(ctx.event.group_id, "回复内容");
 });
 ```
 
-**当前可用关键词：**
-
-| 关键词 | 功能 |
-|--------|------|
-| `来句台词` | 获取一言动漫台词 |
-| `来张图` | 获取 ACG 图片 |
-| `来只孙巴二娘` | 获取孙巴二娘图片 |
-| `来只牛魔` | 获取牛魔图片 |
-
-#### 添加用户命令（# 前缀）
+### 添加用户命令（# 前缀）
 
 在 `pipeline/handlers/user-commands.js` 的 `cmds` 数组中添加：
 
@@ -359,318 +268,32 @@ CMD_MAP.set("你的关键词", async (ctx) => {
 {
     name: "命令名",
     description: "命令描述",
-    params: [{ name: "参数名", desc: "参数说明" }],  // 无参数则为空数组
+    params: [{ name: "参数名", desc: "参数说明" }],
     handler: async (args, ctx) => {
-        // args 是命令参数数组
-        // ctx 是管道上下文
         return "回复文本";
     }
 }
 ```
 
-**当前可用命令：**
+### 添加新中间件
 
-| 命令 | 说明 | 参数 | 权限 |
-|------|------|------|------|
-| `#gw <城市>` | 查询天气 | 城市名称 | 无 |
-| `#clear` | 清除短期记忆 | 无 | 管理员 |
-| `#help` | 显示指令列表 | 无 | 无 |
-| `#msgs` | 列出短期记录 | 无 | 无 |
-| `#cmsgs` | 列出缓存记录 | 无 | 无 |
-| `#sm` | 显示中期记忆概括 | 无 | 无 |
-| `#pchat <true/false>` | 开启/关闭主动回复 | 开关 | 无 |
-| `#model` | 查询可用模型 | 无 | 无 |
-| `#ms <模型名>` | 设置文本模型 | 模型ID | 管理员 |
-| `#skills` | 列出已安装技能 | 无 | 无 |
-| `#reloadskls` | 重新加载技能 | 无 | 管理员 |
-| `#compress` | 压缩短期记忆 | 无 | 管理员 |
-| `#agent <true/false>` | 开启/关闭 Agent 模式 | 开关 | 管理员 |
+在 `pipeline/middleware/` 下创建文件，导出函数接收 `ctx` 参数，在 `pipeline/index.js` 的 `middlewares` 数组中注册。
 
-#### 添加新中间件
+### 添加新服务
 
-1. 在 `pipeline/middleware/` 下创建文件
-2. 导出一个函数，接收 `ctx` 参数并修改它
-3. 在 `pipeline/index.js` 的 `middlewares` 数组中注册
+在 `services/` 下创建文件，封装外部API调用，使用 `logger` 记录日志。
 
-```js
-// pipeline/middleware/your-feature.js
-export default function yourFeature(ctx) {
-    // 读取 ctx.event 获取原始数据
-    // 写入 ctx.yourField 供后续使用
-}
-```
+### Skill 开发
 
-#### 添加新服务
+1. 在 `src/skills/` 下创建目录
+2. 创建 `SKILL.md`（包含frontmatter元数据：name、description）
+3. 在 `scripts/` 子目录中编写JS脚本
 
-在 `services/` 下创建文件，封装外部 API 调用：
+脚本通过 `process.argv[2]` 接收JSON参数，通过 `console.log()` 输出结果。
 
-```js
-// services/your-service.js
-import axios from "axios";
-import logger from "../utils/logger.js";
+### 开发建议
 
-export async function yourFunction(params) {
-    try {
-        const resp = await axios.get("https://api.example.com/endpoint");
-        return resp.data;
-    } catch (err) {
-        logger.error("服务调用失败:", err);
-        return null;
-    }
-}
-```
-
-### 工具调用（Function Calling）
-
-AI 在对话过程中可自主判断是否需要调用工具。调用流程：
-
-```
-AI 返回 tool_calls
-    │
-    ▼
-chat.js 解析工具名和参数
-    │
-    ▼
-tools.js 中的 callTool() 调度到对应函数
-    │
-    ▼
-工具执行结果作为 tool 消息追加到对话列表
-    │
-    ▼
-再次调用 LLM，直到不再返回 tool_calls（最多循环 10 次）
-```
-
-当前可用工具定义在 `llm/tools.js` 中：
-
-| 工具名 | 功能 |
-|--------|------|
-| `get_memory` | 根据当前对话内容搜索长期记忆 |
-| `get_user_profile` | 获取指定 QQ 号用户的画像信息（用户偏好、特征等） |
-| `read_file` | 读取指定路径的文件（白名单限制：`skills/`、`workspace/`） |
-| `run_JS` | 运行 JavaScript 脚本（白名单限制：`skills/`、`workspace/`），支持传递参数 |
-| `create_file` | 在指定路径创建新文件（禁止覆盖已有文件，白名单限制） |
-| `delete_file` | 删除指定路径的文件（白名单限制） |
-| `edit_file` | 通过搜索替换的方式编辑文件内容（白名单限制） |
-| `list_files` | 列出指定目录下的文件和子目录（白名单限制） |
-| `mcp_*` | 外部 MCP Server 提供的工具（自动加 `mcp_` 前缀，运行时动态注册） |
-
-扩展新工具只需：在 `tools` 数组中添加定义，在 `toolMap` 中注册实现函数。连接外部 MCP Server 则只需在 `config.js` 的 `mcpServers` 中添加配置。
-
-### MCP 工具扩展
-
-项目支持连接外部 MCP（Model Context Protocol）Server，将远程工具动态注册到 AI 的工具列表中。MCP 工具名称以 `mcp_` 前缀自动注册（如远程工具 `fetch` 会注册为 `mcp_fetch`）。
-
-**支持的传输协议：**
-
-| transport | 协议 | 适用场景                         | 配置项 |
-|-----------|------|----------------------------------|--------|
-| `stdio`   | 本地子进程 | 本地 MCP Server（如 filesystem） | `command`, `args` |
-| `old_sse` | 旧版 SSE | 旧sse                            | `url`, `headers` |
-| `sse`     | 新版 Streamable HTTP | 标准 MCP                         | `url`, `headers` |
-
-**配置示例（`configDev.js`）：**
-
-```js
-mcpServers: [
-    // 旧版 SSE
-    {
-        name: "",
-        transport: "old_sse",
-        url: "https://example.com/sse",
-        headers: {
-            Authorization: "Bearer ",
-        },
-    },
-    // 新版 
-    {
-        name: "remote-tools",
-        transport: "sse",
-        url: "https://example.com/mcp",
-        headers: {
-            Authorization: "Bearer token",
-        },
-    },
-    // 本地 stdio
-    {
-        name: "filesystem",
-        transport: "stdio",
-        command: "npx",
-        args: ["-y", "@modelcontextprotocol/server-filesystem", "D:/allowed/path"],
-    },
-],
-```
-
-**依赖安装：**
-
-```bash
-# MCP 客户端 SDK（必需）
-npm install @modelcontextprotocol/client
-
-# 旧版 SSE 传输支持（使用 sse 协议时需要）
-npm install @modelcontextprotocol/sdk
-```
-
-**工作流程：**
-
-```
-Bot 启动 → mcpClient.init()
-    │
-    ├─ 遍历 mcpServers 配置
-    ├─ 按 transport 类型创建连接（stdio / sse / old_sse）
-    ├─ 完成 MCP 协议握手
-    ├─ 获取每个 Server 的工具列表
-    └─ 注册到 toolServerMap（工具名 → Server 名映射）
-
-AI 对话时 → getAllTools()
-    │
-    ├─ 本地工具（tools.js 中定义）
-    └─ MCP 工具（mcpClient.getToolDefinition()）
-         └─ 名称自动加 mcp_ 前缀
-
-AI 调用 mcp_xxx 工具 → callTool()
-    │
-    ├─ 识别 mcp_ 前缀，去掉前缀得到原始工具名
-    ├─ 通过 toolServerMap 找到对应的 Server 连接
-    └─ 调用 connection.callTool() 转发到远程 Server
-```
-
-### Skill 技能系统
-
-项目支持通过 Skill 机制扩展 AI 能力。Skill 是包含 `SKILL.md` 描述文件的目录，可包含脚本供 AI 调用。
-
-**目录结构：**
-```
-skills/
-└── your-skill/
-    ├── SKILL.md        # 技能元数据（name、description、命令说明）
-    └── scripts/        # 技能脚本
-        └── your-script.js
-```
-
-**SKILL.md 格式：**
-```markdown
----
-name: your-skill
-description: 技能描述
----
-
-# 技能名称
-
-技能详细说明...
-
-## 可用命令
-
-### 1. 命令名称
-
-filepath: scripts/your-script.js
-args: { "param": "参数说明" }
-```
-
-**内置技能：skill-manager**
-
-用于管理技能的安装和卸载：
-- `install` — 从 GitHub 仓库安装技能
-- `uninstall` — 卸载本地技能
-
-**安全机制：**
-- AI 只能读取和执行 `skills/` 和 `workspace/` 目录下的文件
-- 脚本在子进程中执行，有 30 秒超时限制
-- 参数通过 `process.argv[2]` 以 JSON 字符串形式传递
-
----
-
-## 通信方式
-
-### WebSocket（主要）
-
-- NapCat 以客户端身份连接到本服务的 WebSocket 服务器
-- 事件通过 WebSocket 从 NapCat 推送
-- 动作通过同一 WebSocket 连接发送回 NapCat
-
-### HTTP（辅助）
-
-- `get_image` 等 NapCat 未通过 WebSocket 暴露的接口使用 HTTP 调用
-- 封装在 `services/napcat.js` 中
-
----
-
-## 依赖关系
-
-```
-index.js
-  ├─ bot/server.js ── bot/adapter.js ── utils/logger.js
-  └─ pipeline/index.js
-       ├─ pipeline/context.js ── config.js
-       ├─ pipeline/middleware/
-       │    ├─ image-recognizer.js ── services/napcat.js
-       │    │                       ── utils/image-type.js
-       │    │                       ── llm/image.js ── llm/client.js
-       │    └─ mini-program.js ── llm/recorder.js ── llm/long-term-memory.js ── config.js
-       └─ pipeline/handlers/
-            ├─ keyword-commands.js ── services/acg.js
-            │                      ── services/hitokoto.js
-            │                      ── data/sunbatwo-girls.js
-            │                      ── llm/recorder.js
-            │                      ── utils/time.js
-            ├─ user-commands.js ── services/weather.js
-            │                    ── services/getModels.js
-            │                    ── llm/skill.js
-            ├─ ai-chat.js ── llm/chat.js ──┬── llm/client.js
-            │             │               ├── llm/recorder.js
-            │             │               ├── llm/tools.js ──┬── llm/long-term-memory.js
-            │             │               │                  └── llm/mcp-client.js ── config.js
-            │             │               └── llm/skill.js
-            │             ├── llm/recorder.js
-            │             └── utils/time.js
-            ├─ repeater.js ── tools/repeater.js ── utils/queue.js
-            └─ proactive-chat.js ── llm/chat.js ──┬── llm/client.js
-                                                  ├── llm/recorder.js
-                                                  ├── llm/tools.js ──┬── llm/long-term-memory.js
-                                                  │                  └── llm/mcp-client.js
-                                                  ├── llm/skill.js
-                                                  └── utils/time.js
-```
-
----
-
-## Skill 开发指南
-
-### 创建新 Skill
-
-1. 在 `src/skills/` 下创建目录，如 `my-skill/`
-2. 创建 `SKILL.md` 描述文件，包含 frontmatter 元数据
-3. 在 `scripts/` 子目录中编写 JS 脚本
-
-### 脚本规范
-
-- 脚本通过 `process.argv[2]` 接收 JSON 格式参数
-- 结果通过 `console.log()` 输出
-- 执行超时限制 30 秒
-- 错误信息通过 `stderr` 或抛出异常传递
-
-**示例脚本：**
-```js
-// skills/my-skill/scripts/hello.js
-const args = JSON.parse(process.argv[2] || '{}');
-const name = args.name || 'World';
-console.log(`Hello, ${name}!`);
-```
-
-### 安装社区 Skill
-
-AI 可通过内置的 `skill-manager` 技能从 GitHub 安装社区技能：
-
-```
-从 GitHub 仓库 owner/repo 安装技能
-```
-
-AI 会自动调用 `run_JS` 工具执行安装脚本。
-
----
-
-## 开发建议
-
-1. **添加新命令**：优先考虑放在 `pipeline/handlers/` 下的对应处理器中，或创建新的处理器文件并注册到 `pipeline/index.js`
-2. **调用外部 API**：在 `services/` 下创建新文件，不要在 handler 中直接写 axios/fetch
-3. **日志**：使用 `logger.info/warn/error` 替代 `console.log`
-4. **配置**：新增配置项在 `config.js` 中添加，敏感信息放在 `configDev.js`
+- 新增命令放在 `pipeline/handlers/` 下
+- 外部API调用封装在 `services/` 下
+- 使用 `logger.info/warn/error` 记录日志
+- 配置项在 `config.js` 中添加，敏感信息放 `configDev.js`
