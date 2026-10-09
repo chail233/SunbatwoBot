@@ -1,3 +1,4 @@
+<!-- test-marker: sunbatwo -->
 # SunbatwoBot
 
 <div align="center">
