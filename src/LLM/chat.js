@@ -56,8 +56,6 @@ export default async function chat() {
     tokenCount += result.totalTokens;
     while (result?.message?.tool_calls && toolDepth <= config.TOOLCHAIN_MAX_LENGTH){
         toolDepth++;
-        chatRecorder.add({ role: "assistant", content: "调用工具:\n"+JSON.stringify(result.message.tool_calls) });
-
         for(const tool_call of result.message.tool_calls){
             try {
                 const tool_call_id = tool_call.id;
