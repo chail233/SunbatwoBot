@@ -67,6 +67,7 @@ const cmds = [
     },
     {
         name: "sm",
+        needsAdmin: true,
         description: "显示中期记忆概括",
         params: [],
         handler: async (args, ctx) => {
@@ -104,7 +105,6 @@ const cmds = [
         description: "设置文本模型（管理员）",
         params: [{ name: "模型名称", desc: "模型ID" }],
         handler: async (args, ctx) => {
-            if (!ctx.isAdmin) return "无权限";
             if (args.length === 0) return "缺少参数";
             config.CHAT_MODEL = args[0];
             return `切换了模型为 ${args[0]}`;
@@ -120,6 +120,7 @@ const cmds = [
     },
     {
         name: "reloadskls",
+        needsAdmin: true,
         description: "重新加载技能(管理员)",
         params: [],
         handler: async (args, ctx) => {
@@ -130,10 +131,10 @@ const cmds = [
     },
     {
         name: "compress",
+        needsAdmin: true,
         description: "压缩短期记忆（管理员）",
         params: [],
         handler: async (args, ctx) => {
-            if (!ctx.isAdmin) return "无权限";
             try {
                 await recorder.compress();
                 return "压缩完成";
@@ -149,7 +150,6 @@ const cmds = [
         description: "agent模式开关(管理员)",
         params: [{ name: "开关", desc: "true/false" }],
         handler: async (args, ctx) => {
-            if (!ctx.isAdmin) return "无权限";
             if (args.length === 0) return "缺少参数 true/false";
             if (args[0] === "true") {
                 config.agentMode = true;
@@ -180,6 +180,7 @@ const cmds = [
     },
     {
         name: "do-yes",
+        needsAdmin: true,
         description: "确认执行待确认的危险操作（管理员）",
         params: [{ name: "id", desc: "待确认操作编号" }],
         handler: async (args, ctx) => {
@@ -205,6 +206,7 @@ const cmds = [
     },
     {
         name: "do-pending",
+        needsAdmin: true,
         description: "列出待确认的危险操作",
         params: [],
         handler: async (args, ctx) => {
@@ -213,7 +215,7 @@ const cmds = [
     }
 ];
 
-const USER_CMD_MAP = new Map(cmds.map(cmd => [cmd.name, cmd.handler]));
+const USER_CMD_MAP = new Map(cmds.map(cmd => [cmd.name, cmd]));
 
 
 /**
@@ -243,10 +245,15 @@ export default async function userCommands(ctx) {
         return true;
     }
 
-    const handler = USER_CMD_MAP.get(cmd);
-    if (!handler) return false;
+    const command = USER_CMD_MAP.get(cmd);
+    if (!command) return false;
 
-    const result = await handler(args, ctx);
+    if (command.needsAdmin && !ctx.isAdmin) {
+        ctx.adapter.sendGroupMsg(ctx.event.group_id, "无权限");
+        return true;
+    }
+
+    const result = await command.handler(args, ctx);
     if (result !== null && result !== undefined) {
         ctx.adapter.sendGroupMsg(ctx.event.group_id, result);
     }
