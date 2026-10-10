@@ -43,6 +43,7 @@ test("OneBot WebSocket requires a token and delivers events only after authentic
     const configDevPath = join(fixtureSrc, "configDev.js");
     const token = "websocket-test-token";
     let wss;
+    let explicitHostWss;
     const clients = [];
 
     try {
@@ -121,9 +122,19 @@ test("OneBot WebSocket requires a token and delivers events only after authentic
         const queryAuth = await connect(`${url}?access_token=${encodeURIComponent(token)}`);
         assert.equal(queryAuth.statusCode, 101);
         clients.push(queryAuth.client);
+
+        config.wsHost = "127.0.0.2";
+        explicitHostWss = startOneBotServer(() => {});
+        await once(explicitHostWss, "listening");
+        const explicitHostAddress = explicitHostWss.address();
+        assert.ok(explicitHostAddress && typeof explicitHostAddress !== "string");
+        assert.equal(explicitHostAddress.address, "127.0.0.2");
+        await new Promise(resolve => explicitHostWss.close(resolve));
+        explicitHostWss = null;
     }
     finally {
         await Promise.all(clients.map(closeClient));
+        if (explicitHostWss) await new Promise(resolve => explicitHostWss.close(resolve));
         if (wss) await new Promise(resolve => wss.close(resolve));
         await rm(fixtureRoot, { recursive: true, force: true });
     }
