@@ -20,7 +20,7 @@ class McpConnection{
                 {
                     command:this.config.command,
                     args:this.config.args ?? [],
-                    env: { ...getDefaultEnvironment(), ...(this.config.env ?? {}) },
+                    env: { ...process.env, ...getDefaultEnvironment(), ...(this.config.env ?? {}) },
                 }
             );
         }

@@ -1,5 +1,3 @@
-<!-- app-path probe: sunbatwo -->
-<!-- test-marker: sunbatwo -->
 # SunbatwoBot
 
 <div align="center">
@@ -13,184 +11,19 @@
 
 </div>
 
-这是一个基于 NapCat + OneBot v11 协议的 QQ 机器人服务端。包含了一些已经开发好的功能，
-如关键词识别、执行指令、ai对话等。
+SunbatwoBot 是一个存在于聊天软件中的 **Agent**。它不只是一个聊天机器人——它拥有自主决策、工具调用、文件操作、记忆管理和技能扩展等能力，能够在聊天对话中像一个真正的"成员"一样参与交流和工作。
 
-该项目的AI对话还在继续开发中，目前已经支持：
-- 识别图片内容
-- 区别不同的发言人
-- 主动发言、发送多条消息
-- 联网搜索
-- **工具调用（Function Calling）**（AI 可自主判断并调用工具，如检索长期记忆）
-- **长期记忆**（基于阿里云百炼记忆库，通过工具调用自动存储和召回对话历史中的关键信息）
-- **用户画像**（基于阿里云百炼记忆库画像模板，自动提取并存储用户偏好和特征）
-- **Skill 技能系统**（可从 GitHub 安装/卸载技能，AI 通过工具调用读取和执行 Skill 脚本）
-- **MCP 工具扩展**（连接外部 MCP Server，动态加载远程工具，支持 stdio / SSE / Streamable HTTP 三种传输协议）
+底层通信基于 NapCat + OneBot v11 协议，AI 能力由阿里云百炼平台驱动（支持 DeepSeek / Qwen 等模型）。
 
-你可以快速地配置并使用该项目，或者扩展开发自己想要的功能。
+## 核心能力
 
-## 快速开始
+### 自主 Agent 循环
 
-### 环境要求
-
-- Node.js >= 24
-- NapCat 客户端已运行并配置好反向 WebSocket 连接
-
-### 安装与启动
-
-```bash
-# 拉取代码
-git clone https://github.com/chail233/SunbatwoBot
-# 安装依赖
-npm install
-# 启动
-npm start
-```
-
-### 配置
-
-所有配置集中在 `src/config.js` 中。
-
-**开发环境：** 将 `config.js` 中的 `DevMode` 设为 `true`，在 `src/configDev.js` 中填写真实配置（Token、API Key 等）。
-
-**生产环境：** 将 `DevMode` 设为 `false`，直接在 `config.js` 中填写配置值。
-
-主要配置项：
-- `token`: OneBot 鉴权 Token
-- `targetGroupId`: 目标群 ID
-- `selfId`: 机器人 QQ 号
-- `aiAPIKEY`: 阿里云 AI API Key
-- `qweatherKEY`: 和风天气 Key
-- `githubToken`: GitHub Token（可选，用于技能管理）
-- `members`: QQ 号 → 群昵称映射表
-- `EnableProactiveChat`: 是否启用主动聊天
-- `mcpServers`: MCP Server配置列表
-
-NapCat 反向 WebSocket 连接地址：`ws://127.0.0.1:8080/onebot/v11/ws`
-
----
-
-## 项目结构
-
-```
-src/
-├── index.js                    # 入口文件：启动服务
-│
-├── config.js                   # 统一配置：基础配置、常量、成员映射
-├── configDev.js                # 开发环境配置（gitignore，覆盖 config.js 中的字段）
-│
-├── bot/                        # 机器人通信层
-│   ├── server.js               # WebSocket 服务启动
-│   ├── adapter.js              # OneBot 协议适配器（收发消息封装）
-│   └── actions.js              # 动作构建器（构建 OneBot 动作对象）
-│
-├── pipeline/                   # 事件处理管道 ← 核心
-│   ├── index.js                # 管道编排器：串联中间件 → 处理器
-│   ├── context.js              # 上下文构建器：从事件提取通用信息
-│   ├── middleware/             # 中间件：全部执行，丰富上下文
-│   │   ├── image-recognizer.js # 自动识别图片内容
-│   │   ├── at-detector.js      # 检测是否 @机器人
-│   │   └── mini-program.js     # 处理小程序/链接分享
-│   └── handlers/               # 处理器：按顺序执行，首个命中即停止
-│       ├── keyword-commands.js # 关键词命令（"来句台词"等）
-│       ├── user-commands.js    # 用户命令（# 前缀）
-│       ├── ai-chat.js          # AI 对话（@机器人时触发）
-│       ├── repeater.js         # 复读检测
-│       └── proactive-chat.js   # 主动聊天（消息计数触发）
-│
-├── llm/                        # AI 语言模型层
-│   ├── client.js               # 统一 API 客户端（axios 封装）
-│   ├── chat.js                 # 对话 API（含系统提示词 + 工具调用循环）
-│   ├── tools.js                # 工具定义与调度（Function Calling + MCP 路由）
-│   ├── mcp-client.js           # MCP 客户端管理器（连接外部 Server，加载远程工具）
-│   ├── skill.js                # Skill 加载器（扫描 skills 目录，解析元数据）
-│   ├── image.js                # 识图 API
-│   ├── long-term-memory.js     # 阿里云百炼长期记忆 API 封装
-│   └── recorder.js             # 对话上下文管理器（含长期记忆同步）
-│
-├── services/                   # 外部服务
-│   ├── napcat.js               # NapCat HTTP API 客户端
-│   ├── acg.js                  # ACG 图片 API
-│   ├── hitokoto.js             # 一言（动漫台词）API
-│   ├── weather.js              # 和风天气 API
-│   └── getModels.js            # 百炼平台模型列表查询
-│
-├── data/                       # 静态数据
-│   └── sunbatwo-girls.js       # 孙巴二娘图片 URL 列表
-│
-├── tools/                      # 工具函数
-│   └── repeater.js             # 复读检测算法
-│
-├── skills/                     # Skill 技能目录（AI 可读写）
-│   ├── skill-manager/          # 内置技能：技能管理器
-│
-├── workspace/                  # 工作区目录（AI 可读写）
-│
-└── utils/                      # 通用工具
-    ├── logger.js               # 统一日志（带时间戳）
-    ├── sleep.js                # 延迟
-    ├── random.js               # 随机整数
-    ├── queue.js                # 队列数据结构
-    ├── time.js                 # 时间处理
-    ├── image-type.js           # 图片格式检测（文件头魔数）
-    └── file-security.js        # 文件路径安全校验
-```
-
----
-
-## 架构说明
-
-### 事件处理流程
-
-```
-NapCat 发送事件
-    │
-    ▼
-bot/server.js 接收 WebSocket 连接
-    │
-    ▼
-bot/adapter.js 解析 JSON 事件
-    │
-    ▼
-pipeline/index.js 管道编排器
-    │
-    ├─ 过滤：仅处理 message 事件 + 目标群
-    │
-    ├─ 中间件（全部执行）
-    │   ├─ image-recognizer  → ctx.imageDescription
-    │   ├─ at-detector       → ctx.isAtBot
-    │   └─ mini-program      → ctx.handled = true（若匹配）
-    │
-    └─ 处理器（首个返回 true 即停止）
-        ├─ keyword-commands  → 精确匹配关键词
-        ├─ user-commands     → # 前缀
-        ├─ ai-chat           → @机器人时触发
-        ├─ repeater          → 复读检测
-        └─ proactive-chat    → 记录上下文，达阈值时主动聊天
-```
-
-### 上下文对象 (`ctx`)
-
-每个事件在管道中传递的上下文对象包含：
-
-```js
-{
-    event,          // 原始 OneBot 事件
-    adapter,        // OneBotAdapter 实例（用于发送消息）
-    text,           // 提取的纯文本
-    userId,         // 发送者 QQ 号
-    senderName,     // 解析后的昵称
-    isAdmin,        // 是否管理员
-    isTargetGroup,  // 是否目标群
-    isAtBot,        // 是否 @了机器人
-    imageDescription, // 图片识别描述
-    handled        // 是否已被处理
-}
-```
+AI 不再只是"一问一答"。它运行在一个 **多轮工具调用循环** 中：接收消息 → 推理 → 调用工具 → 观察结果 → 继续推理 → 输出回复。这个循环最多可执行 30 轮（可配置），让 AI 能够完成复杂的多步骤任务。
 
 ### 四层记忆系统
 
-AI 对话使用逐层压缩的记忆架构，在上下文窗口限制与长期信息保留之间取得平衡(30条为示例)：
+AI 拥有从短期到长期的完整记忆架构，在上下文窗口限制与信息保留之间取得平衡：
 
 ```
 短期记忆（_messages）
@@ -208,47 +41,250 @@ AI 对话使用逐层压缩的记忆架构，在上下文窗口限制与长期�
 拼入工具调用结果 → 供 LLM 参考
 ```
 
-**各层级说明：**
-
 | 层级 | 存储位置 | 容量/周期 | 触发条件 |
 |------|---------|-----------|----------|
-| 短期记忆 | `ChatRecorder._messages`（内存） | 30 条 | 每次对话实时更新 |
-| 中期缓存 | `ChatRecorder._cache`（内存） | 满 30 条触发概括 | 短期溢出时 |
-| 中期概括 | `ChatRecorder._midSummary`（内存） | 每次概括覆盖 | 缓存满时 LLM 生成 |
-| 长期记忆 | 阿里云百炼记忆库（云端） | 无上限 | 旧概括被替换时存入；AI 通过工具调用检索 |
-
-**长期记忆流程：**
-
-1. **添加**：当新的中期概括生成时，旧的概括自动以对话摘要格式通过 `AddMemory` API 存入记忆库，用 `SunBot{群号}` 作为记忆实体 ID
-2. **召回**：AI 在对话过程中自主判断是否需要检索记忆，若需要则调用 `get_memory` 工具。工具取最近 10 条有效对话消息（仅 user/assistant 角色）通过 `SearchMemory` API 进行语义检索，召回结果作为工具调用结果返回给 AI
-
-所有长期记忆操作失败均静默处理，不影响原有对话功能。
+| 短期记忆 | 内存 | 30 条 | 每次对话实时更新 |
+| 中期缓存 | 内存 | 满 30 条触发概括 | 短期溢出时 |
+| 中期概括 | 内存 | 每次概括覆盖 | 缓存满时 LLM 生成 |
+| 长期记忆 | 云端记忆库 | 无上限 | 旧概括被替换时存入；AI 自主检索 |
 
 ### 工具调用（Function Calling）
 
-AI可自主调用工具：
-- `get_memory`：搜索长期记忆
-- `get_user_profile`：获取用户画像
-- `read_file`、`run_JS`、`create_file`、`delete_file`、`edit_file`、`list_files`：文件操作（白名单限制）
-- `list_mcp_tools`：动态加载指定MCP Server的工具到工具列表
+AI 可自主判断并调用以下工具：
+
+| 工具 | 功能 |
+|------|------|
+| `get_memory` | 语义检索长期记忆 |
+| `get_user_profile` | 获取指定用户的画像信息 |
+| `read_file` | 读取白名单目录下的文件 |
+| `run_JS` | 在隔离子进程中执行 JS 脚本 |
+| `create_file` | 创建新文件（禁止覆盖） |
+| `edit_file` | 通过搜索替换编辑文件 |
+| `delete_file` | 删除文件 |
+| `list_files` | 列出目录内容 |
+| `list_mcp_tools` | 动态加载 MCP Server 的工具 |
+
+所有文件操作都受到 **路径白名单** 和 **目录穿越防护** 的安全约束。
+
+### 危险操作门禁
+
+写操作工具（`edit_file`、`create_file`、`delete_file`、`run_JS`）默认需要管理员确认才能执行：
+
+1. AI 发起工具调用 → 系统挂起操作，生成待确认编号
+2. 群内通知管理员：`这是危险操作，需要管理员确认。已登记为待确认操作 #xxxx`
+3. 管理员发送 `#do-yes xxxx` 确认执行，或 `#do-no xxxx` 取消
+4. 待确认项 10 分钟超时自动作废
+
+### 用户画像
+
+系统自动从对话中提取用户特征（爱好、性格、偏好等），存储到云端画像模板。AI 可通过 `get_user_profile` 工具查询特定 QQ 号用户的画像，实现个性化回应。
 
 ### MCP 工具扩展
 
-支持连接外部MCP Server，三种传输协议：
-- `stdio`：本地子进程
-- `old_sse`：旧版SSE
-- `sse`：新版Streamable HTTP
+支持连接外部 MCP（Model Context Protocol）Server，三种传输协议：
 
-配置示例见 `configDev.js` 中的 `mcpServers` 字段。MCP工具通过 `list_mcp_tools` 工具动态加载到AI的工具列表中。
+- **stdio**：本地子进程
+- **old_sse**：旧版 SSE 协议
+- **sse**：新版 Streamable HTTP 协议
+
+通过 MCP，AI 可以获得几乎无限的工具扩展能力。你可以在配置中添加任意 MCP Server 来为 AI 增加新工具。
 
 ### Skill 技能系统
 
-Skill是包含 `SKILL.md` 的目录，可包含脚本供AI调用。
+Skill 是包含 `SKILL.md` 描述文件的目录，可包含脚本供 AI 调用。AI 通过读取 SKILL.md 了解技能用法，通过 `run_JS` 执行技能脚本。
 
 **内置技能：**
-- `skill-manager`：从GitHub安装/卸载社区技能
+- `skill-manager`：从 GitHub 安装/卸载社区技能
 
-**安全机制**：AI只能访问 `skills/` 和 `workspace/` 目录，脚本在子进程中执行（30秒超时）。
+技能可被社区开发和共享，AI 甚至可以自主安装新技能来扩展自身能力。
+
+### 视觉能力
+
+AI 具备图片识别能力。当群内发送图片时，自动调用视觉模型（Qwen）识别图片内容，将描述注入对话上下文，让 AI 能够"看到"并理解图片。
+
+### 主动聊天
+
+当群内连续多条消息没有 @机器人时，AI 会根据上下文判断是否主动参与对话，行为更自然。
+
+## 快速开始
+
+### 环境要求
+
+- Node.js >= 24
+- NapCat 客户端已运行并配置好反向 WebSocket 连接
+
+### 安装与启动
+
+```bash
+git clone https://github.com/chail233/SunbatwoBot
+cd SunbatwoBot
+npm install
+npm start
+```
+
+### 配置
+
+所有配置集中在 `src/config.js` 中。
+
+**开发环境：** 将 `config.js` 中的 `DevMode` 设为 `true`，在 `src/configDev.js` 中填写真实配置。
+
+**生产环境：** 将 `DevMode` 设为 `false`，直接在 `config.js` 中填写配置值。
+
+主要配置项：
+
+| 配置项 | 说明 |
+|--------|------|
+| `token` | OneBot 鉴权 Token |
+| `targetGroupId` | 目标群 ID |
+| `selfId` | 机器人 QQ 号 |
+| `aiAPIKEY` | 阿里云 AI API Key |
+| `CHAT_MODEL` | 聊天模型名称 |
+| `VISION_MODEL` | 识图模型名称 |
+| `mcpServers` | MCP Server 配置列表 |
+| `gatedTools` | 需要管理员确认的工具列表 |
+| `agentMode` | Agent 模式开关 |
+| `members` | QQ 号 → 群昵称映射表 |
+
+NapCat 反向 WebSocket 连接地址：`ws://127.0.0.1:8080/onebot/v11/ws`
+
+---
+
+## 架构
+
+### 事件处理管道
+
+```
+NapCat 发送事件
+    │
+    ▼
+bot/server.js ─── WebSocket 服务
+    │
+    ▼
+bot/adapter.js ─── OneBot 协议解析
+    │
+    ▼
+pipeline/index.js ─── 管道编排
+    │
+    ├─ 中间件（全部执行，丰富上下文）
+    │   ├─ image-recognizer  → 识别图片 → ctx.imageDescription
+    │   ├─ at-detector       → 检测 @机器人 → ctx.isAtBot
+    │   └─ mini-program      → 处理小程序/链接分享
+    │
+    └─ 处理器（首个返回 true 即停止）
+        ├─ keyword-commands  → 精确匹配关键词（"来句台词"等）
+        ├─ user-commands     → # 前缀命令（#help、#gw 等）
+        ├─ ai-chat           → @机器人时触发 Agent 循环
+        ├─ repeater          → 复读检测
+        └─ proactive-chat    → 记录上下文，达阈值时主动聊天
+```
+
+### Agent 对话流程
+
+```
+用户消息进入 Agent 循环
+    │
+    ▼
+构建消息上下文（系统提示 + 技能列表 + MCP 列表 + 记忆概要 + 历史消息）
+    │
+    ▼
+调用 LLM（携带全部工具定义）
+    │
+    ├─ 无工具调用 → 解析 JSON 回复 → 分段发送消息
+    │
+    └─ 有工具调用 → 逐个执行工具
+        │           ├─ 本地工具 → 路径校验 + 白名单 + 门禁检查
+        │           └─ MCP 工具 → 路由到对应 MCP Server
+        │
+        ▼
+    工具结果注入上下文 → 再次调用 LLM → 循环（最多 30 轮）
+```
+
+### 用户命令
+
+通过 `#` 前缀触发，部分命令需要管理员权限：
+
+| 命令 | 权限 | 说明 |
+|------|------|------|
+| `#help` | 所有人 | 显示指令列表 |
+| `#gw <城市>` | 所有人 | 查询天气 |
+| `#model` | 所有人 | 查询可用模型 |
+| `#skills` | 所有人 | 列出技能列表 |
+| `#mcp` | 所有人 | 列出 MCP 连接 |
+| `#tools` | 所有人 | 列出当前可用工具 |
+| `#msgs` | 管理员 | 列出短期记忆 |
+| `#cmsgs` | 管理员 | 列出缓存记录 |
+| `#sm` | 管理员 | 显示中期记忆概括 |
+| `#clear` | 管理员 | 清除短期记忆 |
+| `#compress` | 管理员 | 压缩短期记忆 |
+| `#ms <模型>` | 管理员 | 切换聊天模型 |
+| `#pchat <bool>` | 管理员 | 开关主动聊天 |
+| `#agent <bool>` | 管理员 | 开关 Agent 模式 |
+| `#reloadskls` | 管理员 | 重新加载技能 |
+| `#do-yes <id>` | 管理员 | 确认执行危险操作 |
+| `#do-no <id>` | 管理员 | 取消危险操作 |
+| `#do-pending` | 管理员 | 列出待确认操作 |
+
+---
+
+## 项目结构
+
+```
+src/
+├── index.js                    # 入口：初始化 MCP → 启动 WebSocket 服务
+│
+├── config.js                   # 统一配置（基础配置 + 常量 + 成员映射）
+├── configDev.js                # 开发环境配置（gitignore，覆盖 config.js）
+│
+├── bot/                        # 通信层
+│   ├── server.js               # WebSocket 服务
+│   ├── adapter.js              # OneBot 协议适配器（收发消息封装）
+│   └── actions.js              # OneBot 动作构建器
+│
+├── pipeline/                   # 事件处理管道
+│   ├── index.js                # 管道编排：中间件 → 处理器
+│   ├── context.js              # 上下文构建
+│   ├── middleware/              # 中间件（丰富上下文）
+│   │   ├── image-recognizer.js # 图片识别
+│   │   ├── at-detector.js      # @检测
+│   │   └── mini-program.js     # 小程序/链接分享处理
+│   └── handlers/               # 处理器（首个命中即停止）
+│       ├── keyword-commands.js # 关键词命令
+│       ├── user-commands.js    # # 前缀命令
+│       ├── ai-chat.js          # Agent 对话入口
+│       ├── repeater.js         # 复读检测
+│       └── proactive-chat.js   # 主动聊天
+│
+├── llm/                        # Agent 核心
+│   ├── client.js               # LLM API 客户端
+│   ├── chat.js                 # Agent 循环（工具调用 + 多轮推理）
+│   ├── tools.js                # 工具定义与调度
+│   ├── tool-approval.js        # 危险操作确认队列
+│   ├── mcp-client.js           # MCP 客户端管理器
+│   ├── skill.js                # Skill 加载器
+│   ├── image.js                # 视觉 API
+│   ├── long-term-memory.js     # 长期记忆 + 用户画像 API
+│   └── recorder.js             # 四层记忆管理器
+│
+├── services/                   # 外部服务封装
+│   ├── napcat.js               # NapCat HTTP API
+│   ├── acg.js                  # ACG 图片 API
+│   ├── hitokoto.js             # 一言 API
+│   ├── weather.js              # 和风天气 API
+│   └── getModels.js            # 百炼模型列表
+│
+├── skills/                     # Skill 技能目录（AI 可读写）
+│   └── skill-manager/          # 内置：技能管理器
+│
+├── workspace/                  # 工作区（AI 可读写）
+│
+├── utils/                      # 工具函数
+│   ├── logger.js               # 统一日志
+│   ├── file-security.js        # 路径安全校验
+│   ├── sleep.js / random.js / time.js / queue.js / image-type.js
+│
+```
+
+---
 
 ## 开发指南
 
@@ -262,7 +298,7 @@ CMD_MAP.set("关键词", async (ctx) => {
 });
 ```
 
-### 添加用户命令（# 前缀）
+### 添加用户命令
 
 在 `pipeline/handlers/user-commands.js` 的 `cmds` 数组中添加：
 
@@ -277,25 +313,44 @@ CMD_MAP.set("关键词", async (ctx) => {
 }
 ```
 
-### 添加新中间件
+### 添加新工具
 
-在 `pipeline/middleware/` 下创建文件，导出函数接收 `ctx` 参数，在 `pipeline/index.js` 的 `middlewares` 数组中注册。
+在 `llm/tools.js` 的 `tools` 数组中添加工具定义，在 `toolMap` 中注册处理函数。新工具会自动出现在 AI 的可用工具列表中。
 
-### 添加新服务
+### 添加 MCP Server
 
-在 `services/` 下创建文件，封装外部API调用，使用 `logger` 记录日志。
+在 `configDev.js` 的 `mcpServers` 中添加配置：
+
+```js
+{
+    name: "my_mcp",
+    description: "我的 MCP 服务",
+    transport: "stdio",        // 或 "sse" / "old_sse"
+    command: "node",
+    args: ["path/to/server.js"],
+}
+```
+
+AI 可通过 `list_mcp_tools` 工具动态加载该 Server 的所有工具。
 
 ### Skill 开发
 
 1. 在 `src/skills/` 下创建目录
-2. 创建 `SKILL.md`（包含frontmatter元数据：name、description）
-3. 在 `scripts/` 子目录中编写JS脚本
+2. 创建 `SKILL.md`（包含 frontmatter 元数据：name、description）
+3. 在 `scripts/` 子目录中编写 JS 脚本
 
-脚本通过 `process.argv[2]` 接收JSON参数，通过 `console.log()` 输出结果。
+脚本通过 `process.argv[2]` 接收 JSON 参数，通过 `console.log()` 输出结果。脚本在子进程中执行，30 秒超时。
 
-### 开发建议
+### 安全设计
 
-- 新增命令放在 `pipeline/handlers/` 下
-- 外部API调用封装在 `services/` 下
-- 使用 `logger.info/warn/error` 记录日志
-- 配置项在 `config.js` 中添加，敏感信息放 `configDev.js`
+- **路径白名单**：文件操作限制在 `skills/`、`workspace/` 等目录
+- **目录穿越防护**：`..` 等路径穿越被 `file-security.js` 拦截
+- **子进程隔离**：JS 脚本在独立子进程中执行，带超时限制
+- **门禁机制**：写操作需管理员确认，防止 AI 误操作
+
+
+---
+
+## License
+
+[MIT](LICENSE)
