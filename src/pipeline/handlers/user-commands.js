@@ -22,10 +22,10 @@ const cmds = [
     },
     {
         name: "clear",
+        needsAdmin: true,
         description: "清除短期记忆（管理员）",
         params: [],
         handler: async (args, ctx) => {
-            if (!ctx.isAdmin) return "无权限";
             const cnt = recorder.length;
             recorder.clear();
             return `清除了${cnt}条消息。`;
@@ -36,11 +36,15 @@ const cmds = [
         description: "显示指令列表",
         params: [],
         handler: async (args, ctx) => {
-            return cmds.map(cmd => `#${cmd.name} ${cmd.params.map(p => `<${p.name}:${p.desc}>`).join(" ")} //${cmd.description}`).join('\n');
+            return cmds
+                .filter(cmd => ctx.isAdmin || !cmd.needsAdmin)
+                .map(cmd => `#${cmd.name} ${cmd.params.map(p => `<${p.name}:${p.desc}>`).join(" ")} //${cmd.description}`)
+                .join('\n');
         }
     },
     {
         name: "msgs",
+        needsAdmin: true,
         description: "列出短期记录",
         params: [],
         handler: async (args, ctx) => {
@@ -54,6 +58,7 @@ const cmds = [
     },
     {
         name: "cmsgs",
+        needsAdmin: true,
         description: "列出缓存记录",
         params: [],
         handler: async (args, ctx)=>{
@@ -78,6 +83,7 @@ const cmds = [
     },
     {
         name: "pchat",
+        needsAdmin: true,
         description: "开启/关闭主动回复",
         params: [{ name: "开关", desc: "true/false" }],
         handler: async (args, ctx) => {
@@ -102,6 +108,7 @@ const cmds = [
     },
     {
         name: "ms",
+        needsAdmin: true,
         description: "设置文本模型（管理员）",
         params: [{ name: "模型名称", desc: "模型ID" }],
         handler: async (args, ctx) => {
@@ -124,7 +131,6 @@ const cmds = [
         description: "重新加载技能(管理员)",
         params: [],
         handler: async (args, ctx) => {
-            if (!ctx.isAdmin) return "无权限";
             await reloadSkills();
             return "已更新，技能列表：\n" + skills.map(skill => skill.name).join("\n");
         }
@@ -143,10 +149,12 @@ const cmds = [
                 logger.error("短期记忆压缩失败:", err);
                 return "压缩失败";
             }
+
         }
     },
     {
         name: "agent",
+        needsAdmin: true,
         description: "agent模式开关(管理员)",
         params: [{ name: "开关", desc: "true/false" }],
         handler: async (args, ctx) => {
@@ -184,7 +192,6 @@ const cmds = [
         description: "确认执行待确认的危险操作（管理员）",
         params: [{ name: "id", desc: "待确认操作编号" }],
         handler: async (args, ctx) => {
-            if (!ctx.isAdmin) return "无权限";
             if (!args[0]) return "用法：#do-yes <id>";
             const result = await doConfirm(args[0]);
             if (!result.ok) return result.text;
@@ -196,10 +203,10 @@ const cmds = [
     },
     {
         name: "do-no",
+        needsAdmin: true,
         description: "取消待确认的危险操作（管理员）",
         params: [{ name: "id", desc: "待确认操作编号" }],
         handler: async (args, ctx) => {
-            if (!ctx.isAdmin) return "无权限";
             if (!args[0]) return "用法：#do-no <id>";
             return doCancel(args[0]);
         }
