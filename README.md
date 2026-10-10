@@ -57,6 +57,7 @@ npm start
 
 主要配置项：
 - `token`: OneBot 鉴权 Token
+- `wsHost`: WebSocket 监听地址，默认 `127.0.0.1`；仅在需要远程连接时显式改为可达接口地址
 - `targetGroupId`: 目标群 ID
 - `selfId`: 机器人 QQ 号
 - `aiAPIKEY`: 阿里云 AI API Key
@@ -67,6 +68,8 @@ npm start
 - `mcpServers`: MCP Server配置列表
 
 NapCat 反向 WebSocket 连接地址：`ws://127.0.0.1:8080/onebot/v11/ws`
+
+入向连接必须在 `Authorization: Bearer <token>` 或 `access_token` 查询参数中提供与 `token` 配置一致的凭证。远程监听时请显式配置 `wsHost`，并继续使用非占位 Token。`ws://` 不加密；跨不可信网络连接时请使用 VPN 或 TLS 反向代理。
 
 ---
 

@@ -24,6 +24,9 @@ const baseConfig = {
     /** WebSocket 服务端口 */
     wsPort: 8080,
 
+    /** WebSocket 服务监听地址；远程接入时需显式配置 */
+    wsHost: "127.0.0.1",
+
     /** OneBot 鉴权 Token */
     token: "your_token_here",
 
