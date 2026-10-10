@@ -495,6 +495,7 @@ const toolMap = new Map(
  * @param {object} tool_call 完整的工具调用对象 { id, function: { name, arguments } }
  * @param {{isAdmin?: boolean, userId?: string, senderName?: string}|null} [ctx] 请求上下文
  * @param {boolean} [confirmed=false] 是否已确认
+ * @returns {Promise<string>}
  */
 export async function callTool(tool_call, ctx, confirmed = false){
     const name = tool_call.function.name;

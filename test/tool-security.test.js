@@ -97,7 +97,7 @@ test("skill manager API no longer imports the private bot configuration", async 
     assert.equal(typeof api.uninstallSkill, "function");
 });
 
-test("callTool queues an administrator run_JS call until the owner confirms it", async (t) => {
+test("callTool requires run_JS approval and records confirmed edit_file results", async (t) => {
     const srcDirectory = fileURLToPath(new URL("../src/", import.meta.url));
     const configDevPath = join(srcDirectory, "configDev.js");
     if (existsSync(configDevPath)) {
@@ -108,6 +108,7 @@ test("callTool queues an administrator run_JS call until the owner confirms it",
     const workspace = join(srcDirectory, "workspace");
     const workspaceExisted = existsSync(workspace);
     const scriptPath = join(workspace, `approval-probe-${randomUUID()}.js`);
+    const editFilePath = join(workspace, `approval-edit-${randomUUID()}.txt`);
     const secretName = "RUN_JS_APPROVAL_TEST_SECRET";
     const previousSecret = process.env[secretName];
     let createdConfig = false;
@@ -122,6 +123,7 @@ test("callTool queues an administrator run_JS call until the owner confirms it",
                 environmentKeys: Object.keys(process.env).sort(),
             }));
         `);
+        await writeFile(editFilePath, "before");
         process.env[secretName] = "parent-secret-marker";
 
         const { callTool } = await import("../src/LLM/tools.js");
@@ -155,11 +157,39 @@ test("callTool queues an administrator run_JS call until the owner confirms it",
         assert.ok(approvalResult.environmentKeys.includes("PATH"));
         assert.equal(approvalResult.environmentKeys.includes(secretName), false);
         assert.equal(recordedResult.includes("parent-secret-marker"), false);
+
+        recorder.clear();
+        const editToolCall = {
+            id: randomUUID(),
+            function: {
+                name: "edit_file",
+                arguments: JSON.stringify({
+                    filepath: `workspace/${basename(editFilePath)}`,
+                    edits: [{ oldText: "before", newText: "after" }],
+                }),
+            },
+        };
+        const editPending = await callTool(editToolCall, {
+            isAdmin: false,
+            userId: "member",
+            senderName: "Member",
+        });
+        assert.match(editPending, /待确认操作/);
+        const editApprovalId = editPending.match(/#([a-f0-9]{4})/)?.[1];
+        assert.ok(editApprovalId);
+
+        const editConfirmation = await confirm(editApprovalId);
+        assert.equal(editConfirmation.ok, true);
+        assert.equal(await readFile(editFilePath, "utf8"), "after");
+        const editResult = JSON.parse(recorder.getAll().at(-1).content).text;
+        assert.match(editResult, /edit_file调用结果:\n文件编辑成功/);
+        assert.equal(editResult.includes("undefined"), false);
     }
     finally {
         if (previousSecret === undefined) delete process.env[secretName];
         else process.env[secretName] = previousSecret;
         await rm(scriptPath, { force: true });
+        await rm(editFilePath, { force: true });
         if (createdConfig) await rm(configDevPath, { force: true });
         if (!workspaceExisted) {
             await rmdir(workspace).catch(error => {
