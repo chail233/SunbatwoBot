@@ -1,13 +1,13 @@
 import { getWeatherText } from "../../services/weather.js";
 import { getModelsText } from "../../services/getModels.js";
-import recorder from "../../LLM/recorder.js";
+import recorder from "../../llm/recorder.js";
 import config from "../../config.js";
-import {skills} from "../../LLM/skill.js";
-import {reloadSkills} from "../../LLM/skill.js";
-import {mcpClient} from "../../LLM/mcp-client.js";
-import {getAllTools} from "../../LLM/tools.js";
-import {confirm as doConfirm, cancel as doCancel, list as doList} from "../../LLM/tool-approval.js";
-import chat from "../../LLM/chat.js";
+import {skills} from "../../llm/skill.js";
+import {reloadSkills} from "../../llm/skill.js";
+import {mcpClient} from "../../llm/mcp-client.js";
+import {getAllTools} from "../../llm/tools.js";
+import {confirm as doConfirm, cancel as doCancel, list as doList} from "../../llm/tool-approval.js";
+import chat from "../../llm/chat.js";
 import logger from "../../utils/logger.js";
 
 const cmds = [
