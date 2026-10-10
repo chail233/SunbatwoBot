@@ -141,8 +141,15 @@ const cmds = [
         description: "压缩短期记忆（管理员）",
         params: [],
         handler: async (args, ctx) => {
-            const cnt = recorder.compress();
-            return `压缩完成`;
+            try {
+                await recorder.compress();
+                return "压缩完成";
+            }
+            catch (err) {
+                logger.error("短期记忆压缩失败:", err);
+                return "压缩失败";
+            }
+
         }
     },
     {
