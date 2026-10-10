@@ -9,37 +9,24 @@
  */
 
 import { dirname, resolve, join } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { mkdirSync, writeFileSync, rmSync, existsSync, readdirSync } from "node:fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-// 加载项目配置，用于读取 GitHub Token
-const configPath = resolve(__dirname, "..", "..", "..", "config.js");
-const config = (await import(pathToFileURL(configPath).href)).default;
 
 const GITHUB_API_BASE = "https://api.github.com";
 const SKILLS_DIR = resolve(__dirname, "..", "..");
 
 /**
- * 获取 GitHub Token
- * 从 config.githubToken 读取
- * @returns {string|undefined}
- */
-function getGitHubToken() {
-    return config.githubToken || undefined;
-}
-
-/**
  * 构建请求头
+ * @param {string|undefined} token
  * @returns {Record<string, string>}
  */
-function buildHeaders() {
+function buildHeaders(token) {
     const headers = {
         "Accept": "application/vnd.github+json",
         "User-Agent": "SunbatwoBot-SkillManager",
     };
-    const token = getGitHubToken();
     if (token) {
         headers["Authorization"] = `Bearer ${token}`;
     }
@@ -50,10 +37,11 @@ function buildHeaders() {
  * 统一的 GitHub API 请求处理
  * 设计意图：集中处理错误和速率限制
  * @param {string} url
+ * @param {string|undefined} token
  * @returns {Promise<any>}
  */
-async function githubFetch(url) {
-    const res = await fetch(url, { headers: buildHeaders() });
+async function githubFetch(url, token) {
+    const res = await fetch(url, { headers: buildHeaders(token) });
 
     if (res.status === 403) {
         const remaining = res.headers.get("x-ratelimit-remaining");
@@ -136,15 +124,16 @@ export function parseFrontmatter(content) {
  * @param {string} owner
  * @param {string} repo
  * @param {string} subdir
+ * @param {string|undefined} token
  * @returns {Promise<string>} SKILL.md 所在目录路径
  */
-async function detectSkillPath(owner, repo, subdir) {
+async function detectSkillPath(owner, repo, subdir, token) {
     const basePath = subdir || "";
 
     // 1. 尝试 basePath/SKILL.md
     try {
         const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${basePath}/SKILL.md`;
-        await githubFetch(url);
+        await githubFetch(url, token);
         return basePath;
     }
     catch (err) {
@@ -154,7 +143,7 @@ async function detectSkillPath(owner, repo, subdir) {
     // 2. 尝试 basePath/repo/SKILL.md（同名嵌套）
     try {
         const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${basePath}/${repo}/SKILL.md`;
-        await githubFetch(url);
+        await githubFetch(url, token);
         return `${basePath}/${repo}`.replace(/^\/+/, "");
     }
     catch (err) {
@@ -164,13 +153,13 @@ async function detectSkillPath(owner, repo, subdir) {
     // 3. 遍历 basePath 下的子目录
     try {
         const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${basePath}`;
-        const entries = await githubFetch(url);
+        const entries = await githubFetch(url, token);
         if (Array.isArray(entries)) {
             for (const entry of entries) {
                 if (entry.type === "dir") {
                     try {
                         const skillUrl = `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${basePath}/${entry.name}/SKILL.md`;
-                        await githubFetch(skillUrl);
+                        await githubFetch(skillUrl, token);
                         return `${basePath}/${entry.name}`.replace(/^\/+/, "");
                     }
                     catch {
@@ -192,11 +181,12 @@ async function detectSkillPath(owner, repo, subdir) {
  * @param {string} owner
  * @param {string} repo
  * @param {string} path
+ * @param {string|undefined} token
  * @returns {Promise<Array<{name: string, path: string, downloadUrl: string}>>}
  */
-async function getAllFiles(owner, repo, path) {
+async function getAllFiles(owner, repo, path, token) {
     const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${path}`;
-    const entries = await githubFetch(url);
+    const entries = await githubFetch(url, token);
 
     if (!Array.isArray(entries)) {
         return [];
@@ -212,7 +202,7 @@ async function getAllFiles(owner, repo, path) {
             });
         }
         else if (entry.type === "dir") {
-            const subFiles = await getAllFiles(owner, repo, entry.path);
+            const subFiles = await getAllFiles(owner, repo, entry.path, token);
             files.push(...subFiles);
         }
     }
@@ -222,17 +212,18 @@ async function getAllFiles(owner, repo, path) {
 /**
  * 安装 Skill
  * @param {string} repoUrl 仓库地址
+ * @param {string|undefined} token GitHub token
  * @returns {Promise<{name: string, description: string, path: string}>}
  */
-export async function installSkill(repoUrl) {
+export async function installSkill(repoUrl, token) {
     const { owner, repo, subdir } = parseRepoUrl(repoUrl);
 
     // 探测 SKILL.md 位置
-    const skillPath = await detectSkillPath(owner, repo, subdir);
+    const skillPath = await detectSkillPath(owner, repo, subdir, token);
 
     // 获取 SKILL.md 内容
     const skillMdUrl = `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${skillPath}/SKILL.md`;
-    const skillMdData = await githubFetch(skillMdUrl);
+    const skillMdData = await githubFetch(skillMdUrl, token);
     const skillMdContent = Buffer.from(skillMdData.content, "base64").toString("utf-8");
     const meta = parseFrontmatter(skillMdContent);
 
@@ -246,7 +237,7 @@ export async function installSkill(repoUrl) {
     }
 
     // 获取所有文件
-    const files = await getAllFiles(owner, repo, skillPath);
+    const files = await getAllFiles(owner, repo, skillPath, token);
 
     // 创建本地目录并下载文件
     mkdirSync(localPath, { recursive: true });

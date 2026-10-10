@@ -4,6 +4,7 @@
   "description": "A OneBot11 QQ bot based on NapCat, supports LLM conversation, image vision capability and custom message processing.",
   "scripts": {
     "start": "node src/index.js",
+    "test": "node --test",
     "typecheck": "tsc --noEmit"
   },
   "private": false,

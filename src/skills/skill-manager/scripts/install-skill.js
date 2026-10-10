@@ -2,14 +2,14 @@
  * 安装 Skill
  *
  * 从 GitHub 仓库下载 Skill 到本地 skills 目录
- * 参数: { repo: string } — 仓库地址（如 "owner/repo" 或 "https://github.com/owner/repo"）
+ * 参数: { repo: string, githubToken?: string } — 仓库地址与可选的 GitHub token
  */
 
 import { installSkill } from "./github-api.js";
 
 try {
     const args = JSON.parse(process.argv[2] || "{}");
-    const { repo } = args;
+    const { repo, githubToken } = args;
 
     if (!repo) {
         console.error("缺少参数: repo（仓库地址，如 owner/repo 或 https://github.com/owner/repo）");
@@ -17,7 +17,7 @@ try {
     }
 
     console.log("正在安装技能...");
-    const result = await installSkill(repo);
+    const result = await installSkill(repo, githubToken);
 
     console.log("安装成功!");
     console.log(JSON.stringify(result, null, 2));

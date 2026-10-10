@@ -135,6 +135,9 @@ const baseConfig = {
         "run_JS",
     ],
 
+    /** Tools that require explicit owner confirmation even when the owner requested them */
+    adminConfirmTools: ["run_JS", "delete_file"],
+
     /** Agent模式 */
     agentMode: false,
 
@@ -187,9 +190,12 @@ if (baseConfig.DevMode) {
         const devMcp = devConfig.mcpServers ?? [];
         const baseGated = baseConfig.gatedTools ?? [];
         const devGated = devConfig.gatedTools ?? [];
+        const baseAdminConfirm = baseConfig.adminConfirmTools ?? [];
+        const devAdminConfirm = devConfig.adminConfirmTools ?? [];
         Object.assign(baseConfig, devConfig);
         baseConfig.mcpServers = [...baseMcp, ...devMcp];
         baseConfig.gatedTools = [...baseGated, ...devGated];
+        baseConfig.adminConfirmTools = [...new Set([...baseAdminConfirm, ...devAdminConfirm])];
     }
     else {
         console.error("[config] DevMode 为 true，但找不到 configDev.js");

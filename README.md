@@ -248,7 +248,7 @@ Skill是包含 `SKILL.md` 的目录，可包含脚本供AI调用。
 **内置技能：**
 - `skill-manager`：从GitHub安装/卸载社区技能
 
-**安全机制**：AI只能访问 `skills/` 和 `workspace/` 目录，脚本在子进程中执行（30秒超时）。
+**安全机制**：AI只能访问 `skills/` 和 `workspace/` 目录。`run_JS` 子进程仅保留启动 Node 所需的环境变量，并由 Node 权限模型限制文件访问；普通脚本只读，只有内置 Skill 安装/卸载入口可写 `skills/`。所有 `run_JS` 调用都需要管理员明确确认（30秒超时）。内置 Skill 安装脚本只接收其所需的 GitHub Token。Node 权限模型不禁止网络访问，且不能隔离预先存在的符号链接，因此不能替代操作系统级沙箱。
 
 ## 开发指南
 

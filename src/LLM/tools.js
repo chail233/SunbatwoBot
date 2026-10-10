@@ -4,11 +4,12 @@ import config from "../config.js";
 import logger from "../utils/logger.js";
 import { readFile as fsReadFile, writeFile as fsWriteFile, mkdir, rm, readdir, stat } from "node:fs/promises";
 import { dirname, extname, resolve } from "node:path";
-import { execFile } from "node:child_process";
-import { resolveSrcPath, checkPathWhitelist } from "../utils/file-security.js";
+import { resolveSrcPath, checkPathWhitelist, baseDir } from "../utils/file-security.js";
 import {sendGroupMsg} from "../bot/actions.js";
 import {mcpClient} from "./mcp-client.js";
 import {hold} from "./tool-approval.js";
+import { requiresAdminConfirmation } from "./tool-approval-policy.js";
+import { buildRunJsScriptArgs, executeRunJs, getRunJsWritableDirectories } from "./run-js-executor.js";
 
 /**
  *模型可以调用的工具
@@ -270,25 +271,14 @@ async function runJS(param) {
     if (whitelistResult.error) return whitelistResult.error;
 
     try {
-        // 在子进程中执行脚本，参数通过 process.argv[2] 以 JSON 形式传递
         const args = param?.args ?? {};
-        const argsJson = JSON.stringify(args);
-
-        // --use-system-ca 仅在 Windows 上需要，用于使用系统证书存储解决 SSL 问题
-        const nodeArgs = process.platform === "win32"
-            ? ["--use-system-ca", pathResult.fullPath, argsJson]
-            : [pathResult.fullPath, argsJson];
-
-        const { stdout, stderr } = await new Promise((resolve, reject) => {
-            execFile(process.execPath, nodeArgs, { timeout: 30000 }, (error, stdout, stderr) => {
-                if (error) {
-                    if (stderr) reject(new Error(stderr.trim()));
-                    else reject(error);
-                }
-                else {
-                    resolve({ stdout, stderr });
-                }
-            });
+        const scriptArgs = buildRunJsScriptArgs(pathResult.fullPath, args, baseDir, config.githubToken);
+        const allowedDirectories = (config.runJsDirs ?? []).map(dir => resolve(baseDir, dir));
+        const writableDirectories = getRunJsWritableDirectories(pathResult.fullPath, baseDir);
+        const { stdout, stderr } = await executeRunJs(pathResult.fullPath, scriptArgs, {
+            allowedDirectories,
+            writableDirectories,
+            projectRoot: resolve(baseDir, ".."),
         });
         const output = stdout.trim();
         if (output) return output;
@@ -510,9 +500,9 @@ export async function callTool(tool_call, ctx, confirmed = false){
     const name = tool_call.function.name;
     const parameter = JSON.parse(tool_call.function.arguments);
 
-    // 危险操作门禁：非管理员发起且未确认时挂起，等待 #do-yes 确认
+    // Gated tools wait for owner approval; run_JS is explicitly approved for every caller.
     const gatedTools = config.gatedTools ?? [];
-    if (!confirmed && gatedTools.includes(name) && !ctx?.isAdmin) {
+    if (requiresAdminConfirmation(name, ctx, confirmed, gatedTools, config.adminConfirmTools ?? [])) {
         const id = hold(tool_call, ctx);
         if (!id) return `${name} 被拒绝：待确认队列已满，请稍后再试`;
         return `这是危险操作，需要管理员确认。已登记为待确认操作 #${id}。`;
